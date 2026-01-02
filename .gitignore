@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/bin/
+backend/obj/
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+backend/*.db
+
+# Build outputs
+dist/
+build/
+*.dll
+*.exe
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+
+# Uploads
+backend/wwwroot/uploads/
+uploads/
+
