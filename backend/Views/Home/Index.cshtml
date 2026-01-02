@@ -10,7 +10,11 @@
              alt="@Model.Name"
              class="w-full h-48 object-cover rounded-md mb-4" />
         <h2 class="text-2xl font-bold mb-2">@Model.Name</h2>
-        <p class="text-gray-600">@Model.Description</p>
+        <p class="text-gray-600 mb-4">@Model.Description</p>
+        <button onclick="startChat()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors flex items-center justify-center gap-2">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+            İlan Sahibiyle Mesajlaş
+        </button>
     </div>
 </div>
 
@@ -174,6 +178,31 @@
                  if(document.getElementById('loading')) document.getElementById('loading').remove();
                 addMessage('bot', 'Sunucuya ulaşılamadı.');
                 console.error(err);
+            }
+        }
+
+        async function startChat() {
+            try {
+                const response = await fetch('/Messages/StartChat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        petId: "123", // Using hardcoded ID consistent with HomeController
+                        petName: petData.name,
+                        petType: petData.type,
+                        petImage: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60"
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    window.location.href = `/Messages?id=${data.conversationId}`;
+                } else {
+                    alert("Sohbet başlatılamadı.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Bir hata oluştu.");
             }
         }
     </script>

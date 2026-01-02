@@ -1,0 +1,290 @@
+@model List<backend.Models.Conversation>
+
+@{
+    ViewData["Title"] = "Mesajlar";
+}
+
+<div class="flex h-[calc(100vh-120px)] bg-white rounded-lg shadow-xl overflow-hidden border border-gray-200">
+    <!-- Sol Sidebar - Konuşmalar Listesi -->
+    <div class="w-full md:w-[360px] border-r border-gray-100 bg-white flex flex-col">
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <h2 class="font-bold text-xl text-gray-800 tracking-tight">Mesajlar</h2>
+            </div>
+            <div class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">Coming Soon</div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+            @if (!Model.Any())
+            {
+                <div class="p-8 text-center text-gray-400">
+                    <i data-lucide="message-square-off" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                    <p>Henüz mesajınız yok.</p>
+                </div>
+            }
+            else
+            {
+                <div class="divide-y divide-gray-50">
+                    @foreach (var conv in Model)
+                    {
+                        <button onclick="loadConversation('@conv.Id')" 
+                                id="conv-@conv.Id"
+                                class="w-full p-4 flex gap-4 hover:bg-gray-50 transition-all duration-200 text-left group border-l-4 border-transparent hover:border-blue-500 @(conv.UnreadCount > 0 ? "bg-blue-50/50" : "")">
+                            <div class="relative">
+                                <img src="@conv.PetImage" 
+                                     alt="@conv.PetName"
+                                     class="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm group-hover:shadow-md transition-shadow" />
+                                @if (conv.UnreadCount > 0)
+                                {
+                                    <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm animate-pulse">
+                                        @conv.UnreadCount
+                                    </span>
+                                }
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <h3 class="font-semibold text-gray-900 truncate">@conv.PetName <span class="text-gray-400 font-normal">(@conv.PetType)</span></h3>
+                                    <span class="text-xs text-gray-400 whitespace-nowrap ml-2">@conv.LastMessageTime</span>
+                                </div>
+                                <p class="text-sm text-gray-600 font-medium truncate mb-0.5">@conv.OtherUserName</p>
+                                <p class="text-xs text-gray-500 truncate group-hover:text-gray-700 transition-colors">@conv.LastMessage</p>
+                            </div>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Sağ Ana Chat Alanı -->
+    <div class="flex-1 hidden md:flex flex-col bg-gray-50/30 relative" id="chat-area">
+        <!-- Boş Durum -->
+        <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-gray-50/50">
+            <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-6 animate-bounce-slow">
+                <i data-lucide="message-circle-heart" class="w-12 h-12 text-blue-600"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">Sohbet Başlatın</h3>
+            <p class="text-gray-500 max-w-sm">
+                Sol taraftaki listeden bir konuşma seçerek mesajlaşmaya başlayabilirsiniz.
+            </p>
+        </div>
+
+        <!-- Yükleniyor Durumu -->
+        <div id="loading-state" class="absolute inset-0 flex items-center justify-center bg-white z-10 hidden">
+            <i data-lucide="loader-2" class="w-10 h-10 text-blue-600 animate-spin"></i>
+        </div>
+
+        <!-- Chat İçeriği (JS ile dolu) -->
+        <div id="active-chat" class="flex flex-col h-full hidden">
+            <!-- Header -->
+            <div class="bg-white px-6 py-4 border-b border-gray-100 shadow-sm flex items-center justify-between z-10">
+                <div class="flex items-center gap-4">
+                    <img id="header-img" src="" alt="Pet" class="w-12 h-12 rounded-full object-cover border-2 border-gray-100" />
+                    <div>
+                        <h3 id="header-pet" class="font-bold text-gray-900 text-lg leading-tight"></h3>
+                        <div class="flex items-center text-sm text-gray-500">
+                             <span id="header-user" class="font-medium"></span>
+                             <span class="mx-1.5 text-gray-300">•</span>
+                             <span id="header-phone" class="text-gray-400"></span>
+                        </div>
+                    </div>
+                </div>
+                <button class="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-all">
+                    <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Mesajlar -->
+            <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50 relative custom-scrollbar">
+                <!-- Mesajlar buraya gelecek -->
+            </div>
+
+            <!-- Input Area -->
+            <div class="bg-white p-5 border-t border-gray-100">
+                <div class="max-w-4xl mx-auto relative flex items-end gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all shadow-inner">
+                    <button class="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-white transition-colors">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>
+                    <textarea 
+                        id="message-input"
+                        rows="1"
+                        placeholder="Mesajınızı yazın..." 
+                        class="flex-1 bg-transparent border-0 focus:ring-0 p-2 text-gray-800 placeholder-gray-400 resize-none max-h-32 text-sm leading-relaxed"
+                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                    <button onclick="send()" class="p-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="text-center mt-2">
+                    <p class="text-[10px] text-gray-400">Enter tuşuna basarak gönderebilirsiniz • Shift + Enter ile alt satıra geçin</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentConversationId = null;
+
+        // Auto-select first conversation if exists and screen is wide
+        document.addEventListener('DOMContentLoaded', () => {
+             const urlParams = new URLSearchParams(window.location.search);
+             const convoId = urlParams.get('id');
+             if(convoId) {
+                 loadConversation(convoId);
+             }
+        });
+
+        async function loadConversation(id) {
+            currentConversationId = id;
+            
+            // UI States
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('active-chat').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('chat-area').classList.remove('hidden'); // Mobile view logic needed later
+            
+            // Highlight active in sidebar
+            document.querySelectorAll('[id^="conv-"]').forEach(el => {
+                el.classList.remove('bg-blue-50', 'border-blue-500');
+                el.classList.add('border-transparent');
+            });
+            const activeBtn = document.getElementById(`conv-${id}`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-blue-50', 'border-blue-500');
+                activeBtn.classList.remove('border-transparent');
+                
+                // Remove badge
+                const badge = activeBtn.querySelector('.animate-pulse');
+                if(badge) badge.remove();
+            }
+
+            try {
+                const response = await fetch(`/Messages/GetConversation/${id}`);
+                const data = await response.json();
+
+                // Fill Header
+                document.getElementById('header-img').src = data.petImage;
+                document.getElementById('header-pet').textContent = data.petName;
+                document.getElementById('header-user').textContent = data.otherUserName;
+                document.getElementById('header-phone').textContent = data.otherUserPhone || '';
+
+                // Fill Messages
+                const list = document.getElementById('messages-list');
+                list.innerHTML = '';
+                
+                // Date separator logic can be added here
+                
+                data.messages.forEach(msg => {
+                    appendMessageToView(msg);
+                });
+
+                // Show interface
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('active-chat').classList.remove('hidden');
+                
+                // Scroll to bottom
+                scrollToBottom();
+
+            } catch (err) {
+                console.error(err);
+                alert('Sohbet yüklenirken bir hata oluştu');
+                document.getElementById('loading-state').classList.add('hidden');
+            }
+        }
+
+        async function send() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if(!text || !currentConversationId) return;
+
+            input.value = '';
+            input.style.height = 'auto'; // Reset height
+
+            // Optimistic UI update
+            const tempMsg = {
+                sender: 'me',
+                text: text,
+                formattedTime: new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}),
+                isTemp: true
+            };
+            appendMessageToView(tempMsg);
+            scrollToBottom();
+
+            try {
+                const response = await fetch(`/Messages/SendMessage?conversationId=${currentConversationId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if(response.ok) {
+                    // Update side preview text (optional)
+                } else {
+                    alert('Mesaj gönderilemedi');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function appendMessageToView(msg) {
+            const list = document.getElementById('messages-list');
+            const isMe = msg.sender === 'me';
+            
+            const div = document.createElement('div');
+            div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`;
+            
+            div.innerHTML = `
+                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]">
+                    <div class="${isMe 
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl rounded-tr-sm' 
+                        : 'bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-tl-sm shadow-sm'} 
+                        px-5 py-3 text-sm leading-relaxed break-words">
+                        ${msg.text}
+                    </div>
+                    <span class="text-[10px] text-gray-400 mt-1 px-1 font-medium select-none">
+                        ${msg.formattedTime}
+                        ${isMe ? '<i data-lucide="check" class="inline w-3 h-3 ml-1"></i>' : ''}
+                    </span>
+                </div>
+            `;
+            
+            list.appendChild(div);
+            lucide.createIcons();
+        }
+        
+        function scrollToBottom() {
+            const list = document.getElementById('messages-list');
+            list.scrollTop = list.scrollHeight;
+        }
+
+        // Enter to send
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+            }
+        });
+    </script>
+    
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(203, 213, 225, 0.5);
+            border-radius: 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(148, 163, 184, 0.8);
+        }
+    </style>
+}
