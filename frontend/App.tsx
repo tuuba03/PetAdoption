@@ -4,8 +4,11 @@ import { LoginView } from './LoginView'
 import { CreateListingView } from './CreateListingView'
 import { MyListingsView } from './MyListingsView'
 import { OwnershipCardsView } from './OwnershipCardsView'
+import { HomeView } from './HomeView'
+import { PetDetailView } from './PetDetailView'
+import { Header } from './Header'
 
-type View = 'register' | 'login' | 'createListing' | 'myListings' | 'ownershipCards' | 'home'
+type View = 'register' | 'login' | 'createListing' | 'myListings' | 'ownershipCards' | 'home' | 'petDetail'
 
 function App() {
   const [isRegistered, setIsRegistered] = useState(false)
@@ -13,12 +16,14 @@ function App() {
   const [currentView, setCurrentView] = useState<View>('register')
   const [showLogin, setShowLogin] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null)
 
   // Token kontrolü
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
       setIsLoggedIn(true)
+      setCurrentView('home')
     }
   }, [])
 
@@ -56,70 +61,87 @@ function App() {
 
   if (isLoggedIn) {
     const user = JSON.parse(localStorage.getItem('user') || '{}')
-    
+
+    const headerProps = {
+      unreadCount: 0,
+      onLogoClick: () => setCurrentView('home'),
+      onLogout: handleLogout,
+      onCreateListing: () => setCurrentView('createListing'),
+      onMyListings: () => setCurrentView('myListings'),
+      onOwnershipCards: () => setCurrentView('ownershipCards'),
+      onProfile: () => setCurrentView('home'),
+    }
+
+    if (currentView === 'petDetail' && selectedPetId) {
+      return (
+        <>
+          <Header {...headerProps} />
+          <PetDetailView
+            petId={selectedPetId}
+            onBack={() => {
+              setSelectedPetId(null);
+              setCurrentView('home');
+            }}
+            onAdopt={(adoptionData) => {
+              // Sahiplenme başarılı, ownership cards'a yönlendir
+              setCurrentView('ownershipCards');
+            }}
+          />
+        </>
+      );
+    }
+
     if (currentView === 'createListing') {
       return (
-        <CreateListingView
-          onBack={() => setCurrentView('home')}
-          onSubmitListing={() => {
-            setCurrentView('myListings')
-          }}
-        />
+        <>
+          <Header {...headerProps} />
+          <CreateListingView
+            onBack={() => setCurrentView('home')}
+            onSubmitListing={() => {
+              setCurrentView('myListings')
+            }}
+          />
+        </>
       )
     }
 
     if (currentView === 'myListings') {
       return (
-        <MyListingsView
-          onBack={() => setCurrentView('home')}
-          onCreateListing={() => setCurrentView('createListing')}
-        />
+        <>
+          <Header {...headerProps} />
+          <MyListingsView
+            onBack={() => setCurrentView('home')}
+            onCreateListing={() => setCurrentView('createListing')}
+          />
+        </>
       )
     }
 
     if (currentView === 'ownershipCards') {
       return (
-        <OwnershipCardsView
-          onBack={() => setCurrentView('home')}
-        />
+        <>
+          <Header {...headerProps} />
+          <OwnershipCardsView
+            onBack={() => setCurrentView('home')}
+          />
+        </>
       )
     }
 
-    // Ana sayfa (home)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold text-green-600 mb-4">Hoş Geldiniz, {user.name || 'Kullanıcı'}!</h1>
-          <p className="text-gray-600 mb-6">Başarıyla giriş yaptınız.</p>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={() => setCurrentView('createListing')}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            >
-              İlan Oluştur
-            </button>
-            <button
-              onClick={() => setCurrentView('myListings')}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
-            >
-              İlanlarım
-            </button>
-            <button
-              onClick={() => setCurrentView('ownershipCards')}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
-            >
-              Sahiplik Kartlarım
-            </button>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
-            >
-              Çıkış Yap
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+    // Ana sayfa (home) - Pet card'ları göster
+    if (currentView === 'home') {
+      return (
+        <>
+          <Header {...headerProps} />
+          <HomeView
+            onPetDetailClick={(petId) => {
+              setSelectedPetId(petId);
+              setCurrentView('petDetail');
+            }}
+          />
+        </>
+      )
+    }
   }
 
   if (isRegistered) {
