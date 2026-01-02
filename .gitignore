@@ -1,0 +1,21 @@
+# .NET Core
+bin/
+obj/
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+ncrunch.solution.user
+_ReSharper.Caches/
+_ReSharper.Projects/
+*.suo
+
+# Node.js / Frontend
+node_modules/
+dist/
+build/
+.env
+.DS_Store
+coverage/
+.npm/

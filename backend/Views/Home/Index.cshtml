@@ -1,0 +1,180 @@
+@model dynamic
+
+<div class="text-center">
+    <h1 class="text-4xl font-bold mb-4 text-gray-800">Evcil Hayvan Sahiplendirme</h1>
+    <p class="text-lg text-gray-600 mb-8">
+        Bu bir demo sayfasıdır. Sağ alt köşedeki ChatBot ile etkileşime geçebilirsiniz.
+    </p>
+    <div class="bg-white p-6 rounded-lg shadow-md max-w-sm mx-auto">
+        <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2F0fGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60"
+             alt="@Model.Name"
+             class="w-full h-48 object-cover rounded-md mb-4" />
+        <h2 class="text-2xl font-bold mb-2">@Model.Name</h2>
+        <p class="text-gray-600">@Model.Description</p>
+    </div>
+</div>
+
+<!-- ChatBot UI -->
+<div id="chat-container">
+    <!-- Trigger Button -->
+    <div id="chat-trigger" class="fixed bottom-6 right-6 z-50 cursor-pointer group" onclick="toggleChat()">
+        <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-2xl hover:scale-110 transition-transform duration-300">
+            <img src="https://images.unsplash.com/photo-1633093823511-fa9d7d5699a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjdXRlJTIwcGV0JTIwYXZhdGFyfGVufDF8fHx8MTc2NzI4MTAxMXww&ixlib=rb-4.1.0&q=80&w=1080"
+                 alt="PetAdopt AI"
+                 class="w-full h-full object-cover" />
+        </div>
+        <div class="absolute bottom-20 right-0 w-72 bg-white rounded-2xl shadow-2xl p-4 animate-bounce">
+            <div class="absolute -bottom-3 right-8 w-0 h-0 border-l-[15px] border-l-transparent border-t-[20px] border-t-white border-r-[15px] border-r-transparent"></div>
+            <div class="flex items-start gap-2">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-2 flex-shrink-0">
+                    <i data-lucide="bot" class="w-4 h-4 text-white"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm text-gray-900 mb-1">PetAdopt AI</p>
+                    <p class="text-sm text-gray-700">
+                        Merhaba! @Model.Name hakkında merak ettiğin her şeyi sorabilirsin.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="absolute top-0 right-0 bg-yellow-400 rounded-full p-1 animate-pulse">
+            <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+        </div>
+    </div>
+
+    <!-- Chat Interface (Hidden by default) -->
+    <div id="chat-interface" class="fixed bottom-6 right-6 z-50 flex items-end gap-3 hidden">
+        <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-2xl flex-shrink-0 mb-2 hidden md:block">
+            <img src="https://images.unsplash.com/photo-1633093823511-fa9d7d5699a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjdXRlJTIwcGV0JTIwYXZhdGFyfGVufDF8fHx8MTc2NzI4MTAxMXww&ixlib=rb-4.1.0&q=80&w=1080"
+                 class="w-full h-full object-cover" />
+        </div>
+
+        <div class="w-[380px] h-[520px] shadow-2xl flex flex-col relative bg-white rounded-lg border">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-lg flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="bot" class="w-5 h-5"></i>
+                    <div>
+                        <h3 class="font-semibold">PetAdopt AI</h3>
+                        <p class="text-sm text-blue-100">Ben size yardımcı olabilirim! 🐾</p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-white hover:bg-white/20 p-1 rounded">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
+                <!-- Messages will be injected here -->
+            </div>
+
+            <div class="p-4 border-t">
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Mesajınızı yazın..." class="flex-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" onkeypress="handleKeyPress(event)" />
+                    <button onclick="sendMessage()" class="bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-10 inline-flex items-center justify-center rounded-md bg-black text-white">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const petData = {
+            name: '@Model.Name',
+            type: '@Model.Type',
+            description: '@Model.Description'
+        };
+
+        const messagesContainer = document.getElementById('chat-messages');
+        let isChatOpen = false;
+
+        function toggleChat() {
+            const trigger = document.getElementById('chat-trigger');
+            const interface = document.getElementById('chat-interface');
+            
+            isChatOpen = !isChatOpen;
+            
+            if (isChatOpen) {
+                trigger.classList.add('hidden');
+                interface.classList.remove('hidden');
+                if(messagesContainer.children.length === 0) {
+                     addMessage('bot', `Merhaba! ${petData.name} hakkında merak ettiğin her şeyi sorabilirsin.`);
+                }
+            } else {
+                trigger.classList.remove('hidden');
+                interface.classList.add('hidden');
+            }
+        }
+
+        function addMessage(sender, text) {
+            const div = document.createElement('div');
+            div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-[80%] rounded-lg p-3 ${sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`;
+            
+            const pText = document.createElement('p');
+            pText.className = 'text-sm';
+            pText.textContent = text;
+            
+            const pTime = document.createElement('p');
+            pTime.className = `text-xs mt-1 ${sender === 'user' ? 'text-blue-100' : 'text-gray-500'}`;
+            pTime.textContent = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+            bubble.appendChild(pText);
+            bubble.appendChild(pTime);
+            div.appendChild(bubble);
+            
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            input.value = '';
+
+            try {
+                // Show loading indicator (basic)
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = 'loading';
+                loadingDiv.className = 'flex justify-start';
+                loadingDiv.innerHTML = '<div class="bg-gray-100 rounded-lg p-3"><p class="text-sm text-gray-500">Yazıyor...</p></div>';
+                messagesContainer.appendChild(loadingDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pet: petData,
+                        userMessage: message
+                    })
+                });
+
+                // Remove loading
+                document.getElementById('loading').remove();
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addMessage('bot', data.response);
+                } else {
+                    addMessage('bot', 'Bir hata oluştu.');
+                }
+            } catch (err) {
+                 if(document.getElementById('loading')) document.getElementById('loading').remove();
+                addMessage('bot', 'Sunucuya ulaşılamadı.');
+                console.error(err);
+            }
+        }
+    </script>
+}

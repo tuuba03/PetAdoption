@@ -1,0 +1,4 @@
+/* Custom styles to override Tailwind if needed */
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+}
