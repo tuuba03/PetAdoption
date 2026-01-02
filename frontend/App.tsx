@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
 import { RegisterView } from './RegisterView'
 import { LoginView } from './LoginView'
+import { CreateListingView } from './CreateListingView'
+import { MyListingsView } from './MyListingsView'
+
+type View = 'register' | 'login' | 'createListing' | 'myListings' | 'home'
 
 function App() {
   const [isRegistered, setIsRegistered] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [currentView, setCurrentView] = useState<View>('register')
   const [showLogin, setShowLogin] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
 
@@ -26,6 +31,7 @@ function App() {
     setIsLoggedIn(true)
     setShowLogin(false)
     setShowRegister(false)
+    setCurrentView('home')
   }
 
   const handleLogout = () => {
@@ -49,17 +55,53 @@ function App() {
 
   if (isLoggedIn) {
     const user = JSON.parse(localStorage.getItem('user') || '{}')
+    
+    if (currentView === 'createListing') {
+      return (
+        <CreateListingView
+          onBack={() => setCurrentView('home')}
+          onSubmitListing={() => {
+            setCurrentView('myListings')
+          }}
+        />
+      )
+    }
+
+    if (currentView === 'myListings') {
+      return (
+        <MyListingsView
+          onBack={() => setCurrentView('home')}
+          onCreateListing={() => setCurrentView('createListing')}
+        />
+      )
+    }
+
+    // Ana sayfa (home)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold text-green-600 mb-4">Hoş Geldiniz, {user.name || 'Kullanıcı'}!</h1>
-          <p className="text-gray-600 mb-4">Başarıyla giriş yaptınız.</p>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
-          >
-            Çıkış Yap
-          </button>
+          <p className="text-gray-600 mb-6">Başarıyla giriş yaptınız.</p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => setCurrentView('createListing')}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              İlan Oluştur
+            </button>
+            <button
+              onClick={() => setCurrentView('myListings')}
+              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+            >
+              İlanlarım
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
+            >
+              Çıkış Yap
+            </button>
+          </div>
         </div>
       </div>
     )
