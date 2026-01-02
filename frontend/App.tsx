@@ -3,8 +3,9 @@ import { RegisterView } from './RegisterView'
 import { LoginView } from './LoginView'
 import { CreateListingView } from './CreateListingView'
 import { MyListingsView } from './MyListingsView'
+import { OwnershipCardsView } from './OwnershipCardsView'
 
-type View = 'register' | 'login' | 'createListing' | 'myListings' | 'home'
+type View = 'register' | 'login' | 'createListing' | 'myListings' | 'ownershipCards' | 'home'
 
 function App() {
   const [isRegistered, setIsRegistered] = useState(false)
@@ -76,6 +77,14 @@ function App() {
       )
     }
 
+    if (currentView === 'ownershipCards') {
+      return (
+        <OwnershipCardsView
+          onBack={() => setCurrentView('home')}
+        />
+      )
+    }
+
     // Ana sayfa (home)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -94,6 +103,12 @@ function App() {
               className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
             >
               İlanlarım
+            </button>
+            <button
+              onClick={() => setCurrentView('ownershipCards')}
+              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
+            >
+              Sahiplik Kartlarım
             </button>
             <button
               onClick={handleLogout}
