@@ -1,0 +1,79 @@
+@model LoginDto
+@{
+    ViewData["Title"] = "Giriş Yap";
+}
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
+    <div class="w-full max-w-md bg-white rounded-lg shadow-2xl p-8">
+        <div class="text-center mb-8">
+            <div class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-4 mb-4">
+                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Hoş Geldiniz!</h2>
+            <p class="text-gray-600">PetAdopt hesabınıza giriş yapın</p>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <form asp-action="Login" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+
+            <div>
+                <label asp-for="Email" class="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
+                <div class="relative">
+                    <input asp-for="Email" type="email" placeholder="ornek@email.com" 
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <span asp-validation-for="Email" class="text-red-500 text-sm"></span>
+            </div>
+
+            <div>
+                <label asp-for="Password" class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+                <div class="relative">
+                    <input asp-for="Password" type="password" placeholder="••••••••" 
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <span asp-validation-for="Password" class="text-red-500 text-sm"></span>
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="rounded" />
+                    <span class="text-gray-600">Beni hatırla</span>
+                </label>
+                <button type="button" class="text-blue-600 hover:text-blue-700 font-medium">
+                    Şifremi unuttum
+                </button>
+            </div>
+
+            <div asp-validation-summary="All" class="text-red-500 text-sm"></div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition">
+                Giriş Yap
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <span class="text-gray-600">Hesabınız yok mu? </span>
+            <a href="/AuthMvc/Register" class="text-blue-600 hover:text-blue-700 font-semibold">Kayıt Ol</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
