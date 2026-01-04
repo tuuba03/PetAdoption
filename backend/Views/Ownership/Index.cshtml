@@ -1,0 +1,390 @@
+@model List<backend.Models.Ownership>
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Sahiplik Kartlarım";
+}
+
+<!-- Libraries for QR and PDF -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <text>
+        document.addEventListener('DOMContentLoaded', () => {
+             Toast.fire({
+                icon: 'success',
+                title: '@TempData["SuccessMessage"]',
+                background: '#10B981',
+                color: '#fff',
+                iconColor: '#fff'
+            });
+        });
+        </text>
+    }
+</script>
+
+<div class="min-h-[calc(100vh-73px)] bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/Home/Dashboard" class="p-2 hover:bg-white rounded-full transition shadow-sm bg-white">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">Sahiplik Kartlarım</h1>
+            </div>
+            <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition flex items-center gap-2 font-medium shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Hayvan Ekle
+            </button>
+        </div>
+
+        @if (Model != null && Model.Count > 0)
+        {
+            <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
+                @foreach (var ownership in Model)
+                {
+                    List<string> images = new List<string>();
+                    var listing = ownership.Listing;
+                    if (listing != null && !string.IsNullOrEmpty(listing.ImagesJson))
+                    {
+                        try { images = JsonSerializer.Deserialize<List<string>>(listing.ImagesJson) ?? new List<string>(); } catch {}
+                    }
+                    var mainImage = images.FirstOrDefault() ?? "https://via.placeholder.com/400?text=Resim+Yok";
+                    var cardId = "card-" + ownership.Id;
+                    
+                    // Display Data Logic
+                    string displayOwner = ownership.Owner?.Name;
+                    string displayPhone = ownership.Owner?.Phone;
+                    string userNote = "";
+
+                    if (!string.IsNullOrEmpty(ownership.Notes) && ownership.Notes.StartsWith("{"))
+                    {
+                        try {
+                             using (JsonDocument doc = JsonDocument.Parse(ownership.Notes))
+                             {
+                                 if (doc.RootElement.TryGetProperty("DisplayOwner", out var ownerEl)) displayOwner = ownerEl.GetString() ?? displayOwner;
+                                 if (doc.RootElement.TryGetProperty("DisplayPhone", out var phoneEl)) displayPhone = phoneEl.GetString() ?? displayPhone;
+                                 if (doc.RootElement.TryGetProperty("UserNote", out var noteEl)) userNote = noteEl.GetString() ?? "";
+                             }
+                        } catch {}
+                    }
+                    else if (!string.IsNullOrEmpty(ownership.Notes))
+                    {
+                        userNote = ownership.Notes;
+                    }
+
+                    <!-- Ownership Card Structure -->
+                    <div class="flex flex-col">
+                        <div id="@cardId" class="bg-white rounded-2xl shadow-lg overflow-hidden relative border border-gray-100">
+                             <!-- Header Blue/Purple Gradient -->
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-4 flex items-center justify-between text-white h-16">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                                    </div>
+                                    <span class="font-bold tracking-wide text-sm uppercase">SAHİPLİK KARTI</span>
+                                </div>
+                                <div class="flex items-center gap-2 cursor-pointer" onclick="showQRCode('@ownership.Id', '@(listing?.Name)')">
+                                    <svg class="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                                    <span class="text-sm font-medium text-white/90">QR</span>
+                                </div>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="flex gap-6">
+                                    <!-- Image -->
+                                    <div class="shrink-0">
+                                        <div class="w-24 h-24 rounded-xl overflow-hidden shadow-sm">
+                                            <img src="@mainImage" alt="@(listing?.Name)" class="w-full h-full object-cover" crossOrigin="anonymous"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Pet Info -->
+                                    <div class="flex-1 space-y-1">
+                                        <h3 class="font-bold text-xl text-gray-900 leading-tight mb-1">@(listing?.Name)</h3>
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            <span class="bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded text-xs font-semibold">@(listing?.Type)</span>
+                                            @if(!string.IsNullOrEmpty(listing?.Breed)) {
+                                                <span class="bg-gray-50 text-gray-600 px-2.5 py-0.5 rounded text-xs border border-gray-200">@(listing?.Breed)</span>
+                                            }
+                                        </div>
+
+                                        <div class="flex justify-between items-center text-sm">
+                                            <span class="text-gray-500 w-16">Yaş:</span>
+                                            <span class="font-semibold text-gray-900 text-right">@(listing?.Age)</span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-sm">
+                                            <span class="text-gray-500 w-16">Şehir:</span>
+                                            <span class="font-semibold text-gray-900 text-right">@(listing?.City)</span>
+                                        </div>
+                                        
+                                         @if (!string.IsNullOrEmpty(listing?.Health))
+                                        {
+                                             <div class="mt-3">
+                                                 <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-0.5 rounded-full border border-green-100 text-xs font-medium">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    @listing.Health.Split(',')[0]
+                                                </span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Middle Separator/Footer Area -->
+                             <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
+                                 <div class="flex items-center gap-2 mb-4 text-xs text-gray-500">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <span>Sahiplenme Tarihi: @ownership.AdoptionDate.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"))</span>
+                                </div>
+                            
+                                 <div class="flex justify-between items-end gap-4 text-sm">
+                                    <div>
+                                        <p class="text-xs text-gray-500 mb-0.5">Sahip:</p>
+                                        <p class="font-bold text-gray-900 truncate max-w-[120px]">@displayOwner</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-500 mb-0.5">İletişim:</p>
+                                        <p class="font-bold text-gray-900 truncate">@displayPhone</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Download Actions -->
+                        <div class="mt-4 flex justify-center bg-white border rounded-lg shadow-sm">
+                            <div class="w-full relative group">
+                                <button class="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition rounded-lg">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Kartı İndir
+                                </button>
+                                <div class="absolute bottom-full left-0 w-full mb-1 bg-white rounded-lg shadow-xl border py-1 hidden group-hover:block z-10">
+                                    <button onclick="downloadCard('@cardId', 'png', '@(listing?.Name)')" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        Resim Olarak İndir
+                                    </button>
+                                    <button onclick="downloadCard('@cardId', 'pdf', '@(listing?.Name)')" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                        PDF Olarak İndir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div id="modalBackdrop" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <!-- QR Modal -->
+    <div id="qrModal" class="bg-white rounded-2xl w-full max-w-sm mx-4 transform scale-95 opacity-0 transition-all duration-300 hidden">
+        <!-- ... QR content same as before ... -->
+         <div class="p-6">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-lg font-bold text-center w-full">Sahiplik Kartı QR Kodu</h3>
+                <button onclick="closeModals()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="bg-gray-50 p-8 rounded-xl flex justify-center border-2 border-dashed border-gray-200 mb-4">
+                <div id="qrcode"></div>
+            </div>
+            <p id="qrPetName" class="text-center font-bold text-xl text-gray-900 mb-6"></p>
+            <button onclick="closeModals()" class="w-full bg-gray-900 text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition">
+                Kapat
+            </button>
+        </div>
+    </div>
+
+    <!-- Create Modal -->
+    <div id="createModal" class="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto transform scale-95 opacity-0 transition-all duration-300 hidden">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">Yeni Sahiplik Kartı</h3>
+                <button onclick="closeModals()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form action="/Ownership/CreateManual" method="post" enctype="multipart/form-data" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Hayvanın Adı</label>
+                            <input type="text" name="Name" required class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Örn: Pamuk">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tür</label>
+                            <select name="Type" required class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="Kedi">Kedi</option>
+                                <option value="Köpek">Köpek</option>
+                                <option value="Kuş">Kuş</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Irk</label>
+                            <input type="text" name="Breed" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Örn: Tekir">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Yaş</label>
+                            <input type="text" name="Age" required class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Örn: 2 Yaşında">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Sahiplenme Tarihi</label>
+                            <input type="date" name="AdoptionDate" required class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kart Sahibi Adı Soyadı</label>
+                            <input type="text" name="OwnerName" required class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Kartta görünecek isim">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">İletişim Numarası</label>
+                            <input type="text" name="OwnerPhone" required class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="05XX XXX XX XX">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Şehir</label>
+                            <input type="text" name="City" required class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Örn: İstanbul">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Sağlık Durumu</label>
+                            <input type="text" name="Health" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Örn: Aşıları tam">
+                        </div>
+                        <div>
+                             <label class="block text-sm font-medium text-gray-700 mb-1">Fotoğraf</label>
+                             <input type="file" name="Image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="closeModals()" class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition">İptal</button>
+                    <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition shadow-lg">Kartı Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ... animation functions startChat showQRCode etc. ...
+    const backdrop = document.getElementById('modalBackdrop');
+    const qrModal = document.getElementById('qrModal');
+    const createModal = document.getElementById('createModal');
+
+    function openModalAnimation(modal) {
+        backdrop.classList.remove('hidden');
+        modal.classList.remove('hidden');
+        void backdrop.offsetWidth; 
+        backdrop.classList.remove('opacity-0');
+        modal.classList.remove('opacity-0', 'scale-95');
+        modal.classList.add('scale-100');
+    }
+
+    function closeModalAnimation() {
+        backdrop.classList.add('opacity-0');
+        qrModal.classList.add('opacity-0', 'scale-95');
+        qrModal.classList.remove('scale-100');
+        createModal.classList.add('opacity-0', 'scale-95');
+        createModal.classList.remove('scale-100');
+        
+        setTimeout(() => {
+            backdrop.classList.add('hidden');
+            qrModal.classList.add('hidden');
+            createModal.classList.add('hidden');
+        }, 300);
+    }
+
+    function showQRCode(id, name) {
+        document.getElementById('qrcode').innerHTML = '';
+        document.getElementById('qrPetName').innerText = name;
+        new QRCode(document.getElementById('qrcode'), {
+            text: "petadopt-ownership:" + id,
+            width: 150,
+            height: 150
+        });
+        openModalAnimation(qrModal);
+    }
+
+    function openCreateModal() { openModalAnimation(createModal); }
+    function closeModals() { closeModalAnimation(); }
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModals(); });
+
+    async function downloadCard(elementId, format, fileName) {
+      const element = document.getElementById(elementId);
+      
+      // Force element to be fully opaque and visible for capture
+      // If needed we can clone it to a hidden container
+      
+       Toast.fire({
+            icon: 'info',
+            title: 'Hazırlanıyor...',
+            timer: 1500
+        });
+
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 3, // Higher resolution for crisp text
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+
+        if (format === 'png') {
+          const link = document.createElement('a');
+          link.download = `Sahiplik-Karti-${fileName}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        } else if (format === 'pdf') {
+          const { jsPDF } = window.jspdf;
+          // Calculate PDF size based on canvas aspect ratio
+          // Default A4 or keep card ratio? Let's use card ratio to avoid white space
+          const imgWidth = 210; // mm (A4 width)
+          const pageHeight = 297; 
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          // Center vertically if strictly A4, or just add
+          const yPos = (pageHeight - imgHeight) / 2 > 0 ? (pageHeight - imgHeight) / 2 : 10;
+          
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, yPos, imgWidth, imgHeight);
+          pdf.save(`Sahiplik-Karti-${fileName}.pdf`);
+        }
+        
+         Toast.fire({
+            icon: 'success',
+            title: 'İndirme Başladı'
+        });
+      } catch (error) {
+        console.error('Download error', error);
+         Toast.fire({
+            icon: 'error',
+            title: 'Hata: ' + error.message
+        });
+      }
+    }
+</script>

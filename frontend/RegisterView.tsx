@@ -252,6 +252,7 @@ export function RegisterView({ onRegister, onSwitchToLogin }: RegisterViewProps)
           <div className="text-center">
             <span className="text-gray-600">Zaten hesabınız var mı? </span>
             <button
+              type="button"
               onClick={onSwitchToLogin}
               className="text-blue-600 hover:text-blue-700 font-semibold"
             >

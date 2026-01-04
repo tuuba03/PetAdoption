@@ -37,7 +37,7 @@ export function LoginView({ onLogin, onSwitchToRegister }: LoginViewProps) {
       // Response'un içeriğini kontrol et
       const contentType = response.headers.get('content-type');
       let data;
-      
+
       if (contentType && contentType.includes('application/json')) {
         const text = await response.text();
         if (text) {
@@ -176,6 +176,7 @@ export function LoginView({ onLogin, onSwitchToRegister }: LoginViewProps) {
           <div className="text-center">
             <span className="text-gray-600">Hesabınız yok mu? </span>
             <button
+              type="button"
               onClick={onSwitchToRegister}
               className="text-blue-600 hover:text-blue-700 font-semibold"
             >

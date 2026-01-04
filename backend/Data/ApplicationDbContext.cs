@@ -53,6 +53,28 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Ownership>()
             .HasIndex(o => o.QrCodeId)
             .IsUnique();
+
+        // Messaging Config
+        modelBuilder.Entity<Conversation>()
+            .HasOne(c => c.Seller)
+            .WithMany()
+            .HasForeignKey(c => c.SellerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Conversation>()
+            .HasOne(c => c.Buyer)
+            .WithMany()
+            .HasForeignKey(c => c.BuyerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany()
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
+
+    public DbSet<Conversation> Conversations { get; set; }
+    public DbSet<Message> Messages { get; set; }
 }
 

@@ -1,0 +1,338 @@
+@model IEnumerable<backend.Models.Listing>
+@using System.Text.Json
+@using backend.Models
+
+@{
+    ViewData["Title"] = "Ana Sayfa";
+    var userName = Context.Session.GetString("UserName");
+    var filter = ViewBag.Filter as ListingFilterDto ?? new ListingFilterDto();
+
+    // Frontend'den alınan cins listesi (backend'de statik olarak tutuluyor şimdilik)
+    var breedsByType = new Dictionary<string, List<string>>
+    {
+        { "Kedi", new List<string> { "Scottish Fold", "Tekir", "British Shorthair", "Van Kedisi", "Persian", "Ankara Kedisi" } },
+        { "Köpek", new List<string> { "Golden Retriever", "Labrador", "German Shepherd", "Husky", "Kangal", "Poodle" } },
+        { "Kuş", new List<string> { "Muhabbet Kuşu", "Sultan Papağanı", "Kanarya", "Cennet Papağanı" } },
+        { "Tavşan", new List<string> { "Holland Lop", "Angora", "Lop", "Netherland Dwarf" } }
+    };
+
+    var currentBreeds = !string.IsNullOrEmpty(filter.Type) && breedsByType.ContainsKey(filter.Type) 
+        ? breedsByType[filter.Type] 
+        : new List<string>();
+}
+
+<!-- Header is now in _Layout.cshtml -->
+
+<div class="flex min-h-[calc(100vh-73px)]">
+    <!-- Sidebar / FilterPanel -->
+    <aside class="w-[280px] border-r bg-gray-50 p-6 space-y-6 hidden lg:block overflow-y-auto h-[calc(100vh-73px)] sticky top-[73px]">
+        
+        <form method="get" asp-action="Dashboard" id="filterForm">
+            <!-- Hidden search input to preserve search query when filtering -->
+            <input type="hidden" name="SearchQuery" id="searchInput" value="@filter.SearchQuery" />
+
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                    <h2 class="font-semibold">Filtreler</h2>
+                </div>
+                <button type="button" onclick="window.location.href='/Home/Dashboard'" class="text-sm text-blue-600 hover:underline">
+                    Sıfırla
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">Tür / Kategori</label>
+                    <select name="Type" onchange="this.form.submit()" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1">
+                        <option value="">Tümü</option>
+                        @foreach(var type in breedsByType.Keys) {
+                             <!option value="@type" @(filter.Type == type ? "selected" : "")>@type</!option>
+                        }
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">Cins</label>
+                    <select name="Breed" onchange="this.form.submit()" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" @(string.IsNullOrEmpty(filter.Type) ? "disabled" : "")>
+                        <option value="">@(string.IsNullOrEmpty(filter.Type) ? "Önce tür seçin" : "Tümü")</option>
+                        @if (!string.IsNullOrEmpty(filter.Type) && breedsByType.ContainsKey(filter.Type))
+                        {
+                            foreach(var breed in breedsByType[filter.Type])
+                            {
+                                 <!option value="@breed" @(filter.Breed == breed ? "selected" : "")>@breed</!option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">Şehir</label>
+                    <select name="City" onchange="this.form.submit()" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                        <option value="">Tümü</option>
+                        @{
+                            var cities = new[] { "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Adana", "Gaziantep", "Konya", "Mersin", "Kayseri" };
+                            foreach(var city in cities)
+                            {
+                                <!option value="@city" @(filter.City == city ? "selected" : "")>@city</!option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium leading-none">Yaş</label>
+                    <select name="Age" onchange="this.form.submit()" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                        <option value="">Tümü</option>
+                        <!option value="0-1" @(filter.Age == "0-1" ? "selected" : "")>0-1 yaş</!option>
+                        <!option value="1-3" @(filter.Age == "1-3" ? "selected" : "")>1-3 yaş</!option>
+                        <!option value="3+" @(filter.Age == "3+" ? "selected" : "")>3+ yaş</!option>
+                    </select>
+                </div>
+
+                 <div class="flex items-center space-x-2 pt-2">
+                    <input type="checkbox" id="health" name="HealthChecked" value="true" onchange="this.form.submit()" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" @(filter.HealthChecked == true ? "checked" : "") />
+                    <label for="health" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                        Sağlık kontrolü yapılmış
+                    </label>
+                </div>
+                
+                 <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition shadow-sm font-medium">
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 bg-white overflow-y-auto h-[calc(100vh-73px)]">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold mb-2">Sahiplendirme İlanları</h1>
+                <p class="text-gray-600">@Model.Count() ilan bulundu</p>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-12">
+                     <div class="bg-gray-50 rounded-full p-6 inline-block mb-4">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                     </div>
+                    <p class="text-gray-500 text-lg">Aradığınız kriterlere uygun ilan bulunamadı.</p>
+                     <button onclick="window.location.href='/Home/Dashboard'" class="mt-4 text-blue-600 hover:underline font-medium">Filtreleri Temizle</button>
+                </div>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    @foreach (var pet in Model)
+                    {
+                        var images = new List<string>();
+                        if (!string.IsNullOrEmpty(pet.ImagesJson))
+                        {
+                            try { images = JsonSerializer.Deserialize<List<string>>(pet.ImagesJson) ?? new List<string>(); } catch {}
+                        }
+                        var mainImage = images.FirstOrDefault() ?? "https://via.placeholder.com/400x300?text=No+Image";
+
+                        <div class="group bg-white rounded-xl shadow-sm border hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer" onclick="window.location.href='/Listings/Details/@pet.Id'">
+                            <!-- Image -->
+                            <div class="relative aspect-square overflow-hidden bg-gray-100">
+                                <img src="@mainImage" alt="@pet.Name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError="this.src='https://via.placeholder.com/400?text=Resim+Yok'"/>
+                                
+                                <button class="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white text-gray-400 hover:text-red-500" onclick="event.stopPropagation()">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Content -->
+                            <div class="p-4 flex-1 flex flex-col space-y-2">
+                                <div>
+                                    <h3 class="font-semibold text-lg">@pet.Name</h3>
+                                    <p class="text-sm text-gray-600">@pet.Type</p>
+                                </div>
+
+                                <div class="flex items-center gap-4 text-sm text-gray-500">
+                                    <div class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        <span>@pet.City</span>
+                                    </div>
+                                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 bg-gray-100 text-gray-900">
+                                        @pet.Age
+                                    </span>
+                                </div>
+
+                                <p class="text-sm text-gray-500">
+                                    Sahiplendiren: <span class="text-blue-600">@@@pet.User?.Name</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Footer -->
+                            <div class="p-4 pt-0 flex flex-col gap-2" onclick="event.stopPropagation()">
+                                <a href="/Listings/Details/@pet.Id" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    İlan Detayı
+                                </a>
+                                    <button onclick="startAIChat('@pet.Name', '@pet.Type', '@pet.Description?.Replace("'", "\\'")')" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 h-10 px-4 py-2 w-full shadow-sm hover:shadow-md">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                        </svg>
+                                        PetAdopt AI
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+
+    <!-- AI Chat Widget -->
+    <div id="aiChatWidget" class="fixed bottom-6 right-6 w-[350px] bg-white rounded-2xl shadow-2xl border border-gray-100 hidden z-50 overflow-hidden font-sans transition-all duration-300 transform translate-y-10 opacity-0">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between text-white">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm">PetAdopt AI</h3>
+                    <p class="text-xs text-blue-100">Ben size yardımcı olabilirim! 🐾</p>
+                </div>
+            </div>
+            <button onclick="closeAIChat()" class="p-1 hover:bg-white/10 rounded-full transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="aiChatMessages" class="h-[350px] overflow-y-auto p-4 bg-gray-50 space-y-3">
+            <!-- Initial AI Message -->
+            <div class="flex gap-3 items-start">
+               <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-100 to-purple-100 flex items-center justify-center shrink-0 border border-white shadow-sm">
+                    <span class="text-xs">🤖</span>
+                </div>
+                <div class="bg-white p-3 rounded-2xl rounded-tl-none text-sm text-gray-600 shadow-sm border border-gray-100 max-w-[85%]">
+                    <p id="aiWelcomeMessage">Merhaba! Hakkında merak ettiğin her şeyi sorabilirsin.</p>
+                    <span class="text-[10px] text-gray-400 mt-1 block">Şimdi</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-3 bg-white border-t">
+            <div class="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
+                <input type="text" id="aiChatInput" placeholder="Mesajınızı yazın..." class="flex-1 bg-transparent border-0 outline-none text-sm text-gray-700 placeholder:text-gray-400" onkeypress="if(event.key === 'Enter') sendAIMessage()">
+                <button onclick="sendAIMessage()" class="p-1.5 bg-gray-900 text-white rounded-full hover:bg-gray-700 transition shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+             <p class="text-[10px] text-center text-gray-400 mt-2">✨ Gemini AI tarafından desteklenmektedir ve hata yapabilir.</p>
+        </div>
+    </div>
+
+    <script>
+        let currentPet = null;
+
+        function startAIChat(name, type, description) {
+            currentPet = { name, type, description };
+            
+            const widget = document.getElementById('aiChatWidget');
+            const messages = document.getElementById('aiChatMessages');
+            const welcome = document.getElementById('aiWelcomeMessage');
+            
+            // Set welcome message logic
+            welcome.innerText = `Merhaba! ${name} hakkında merak ettiğin her şeyi sorabilirsin. Örn: "Apartmana uygun mu?"`;
+            
+            // Reset messages if opening for new pet (simple logic: clear everything except welcome)
+            // For now, let's keep it simple and just show the widget
+            
+             widget.classList.remove('hidden');
+             // Trigger reflow for transition
+             void widget.offsetWidth;
+             widget.classList.remove('translate-y-10', 'opacity-0');
+        }
+
+        function closeAIChat() {
+             const widget = document.getElementById('aiChatWidget');
+             widget.classList.add('translate-y-10', 'opacity-0');
+             setTimeout(() => widget.classList.add('hidden'), 300);
+        }
+
+        async function sendAIMessage() {
+            const input = document.getElementById('aiChatInput');
+            const text = input.value.trim();
+            if (!text || !currentPet) return;
+
+            // Add User Message
+            appendAIMessage(text, 'user');
+            input.value = '';
+
+            // Add Loading
+            const loadingId = appendAIMessage('...', 'ai', true);
+
+            try {
+                const response = await fetch('/api/Chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pet: currentPet,
+                        userMessage: text
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Remove Loading and Add AI Response
+                document.getElementById(loadingId)?.remove();
+                if (data.response) {
+                    appendAIMessage(data.response, 'ai');
+                } else {
+                    appendAIMessage('Üzgünüm, şu an cevap veremiyorum.', 'ai');
+                }
+
+            } catch (error) {
+                console.error(error);
+                 document.getElementById(loadingId)?.remove();
+                appendAIMessage('Bir hata oluştu.', 'ai');
+            }
+        }
+
+        function appendAIMessage(text, sender, isLoading = false) {
+            const container = document.getElementById('aiChatMessages');
+            const isUser = sender === 'user';
+            
+            const div = document.createElement('div');
+            div.className = `flex gap-3 items-start ${isUser ? 'flex-row-reverse' : ''}`;
+            if (isLoading) div.id = 'aiLoading-' + Date.now();
+            
+            const time = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            
+            const avatar = isUser 
+                ? `<div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`
+                : `<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-100 to-purple-100 flex items-center justify-center shrink-0 border border-white shadow-sm"><span class="text-xs">🤖</span></div>`;
+
+            div.innerHTML = `
+                ${avatar}
+                <div class="${isUser ? 'bg-blue-600 text-white' : 'bg-white text-gray-600'} p-3 rounded-2xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'} text-sm shadow-sm border ${isUser ? 'border-transparent' : 'border-gray-100'} max-w-[85%]">
+                    <p>${text}</p>
+                    <span class="text-[10px] ${isUser ? 'text-blue-100' : 'text-gray-400'} mt-1 block text-right">${time}</span>
+                </div>
+            `;
+            
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div.id;
+        }
+    </script>

@@ -1,0 +1,262 @@
+@model backend.Models.Listing
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = Model.Name + " | PetAdopt";
+    List<string> images = new List<string>();
+    if (!string.IsNullOrEmpty(Model.ImagesJson))
+    {
+        try { images = JsonSerializer.Deserialize<List<string>>(Model.ImagesJson) ?? new List<string>(); } catch {}
+    }
+    var mainImage = images.FirstOrDefault() ?? "https://via.placeholder.com/600x400?text=Resim+Yok";
+}
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8 text-sm text-gray-500">
+            <a href="/Home/Dashboard" class="hover:text-blue-600 transition-colors">Ana Sayfa</a>
+            <span class="mx-2">›</span>
+            <span class="hover:text-blue-600 transition-colors cursor-pointer">@Model.Type</span>
+            <span class="mx-2">›</span>
+            <span class="text-gray-900 font-medium">@Model.Name</span>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Sol Kolon: Görseller -->
+            <div class="space-y-4">
+                <div class="aspect-square rounded-2xl overflow-hidden bg-white shadow-sm border relative group">
+                     <img src="@mainImage" alt="@Model.Name" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" id="mainImage"/>
+                </div>
+                
+                @if (images.Count > 1)
+                {
+                    <div class="grid grid-cols-4 gap-4">
+                        @foreach (var img in images)
+                        {
+                            <div class="aspect-square rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all opacity-70 hover:opacity-100" onclick="document.getElementById('mainImage').src = this.querySelector('img').src">
+                                <img src="@img" alt="@Model.Name" class="w-full h-full object-cover" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Sağ Kolon: Detaylar -->
+            <div class="space-y-6">
+                <!-- Temel Bilgiler Kartı -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm border space-y-6">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900 mb-2">@Model.Name</h1>
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">@Model.Type</span>
+                                <div class="flex items-center text-gray-500 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    @Model.City
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-b py-6 my-6">
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Yaş</dt>
+                                <dd class="mt-1 text-sm font-semibold text-gray-900">@Model.Age</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Tür</dt>
+                                <dd class="mt-1 text-sm font-semibold text-gray-900">@Model.Type</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Cins</dt>
+                                <dd class="mt-1 text-sm font-semibold text-gray-900">@(Model.Breed ?? "-")</dd>
+                            </div>
+                             <div>
+                                <dt class="text-sm font-medium text-gray-500">Şehir</dt>
+                                <dd class="mt-1 text-sm font-semibold text-gray-900">@Model.City</dd>
+                            </div>
+                            <div class="col-span-2">
+                                <dt class="text-sm font-medium text-gray-500">Sağlık Durumu</dt>
+                                <dd class="mt-1 text-sm font-semibold text-gray-900">@Model.Health</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-2">Açıklama</h3>
+                        <p class="text-gray-600 leading-relaxed">@Model.Description</p>
+                    </div>
+                </div>
+
+                <!-- İlan Sahibi Kartı -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border">
+                    <h3 class="font-semibold text-gray-900 mb-4">Sahiplendiren</h3>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-xl">
+                                @(Model.User?.Name?.Length > 0 ? Model.User.Name.Substring(0, 1).ToUpper() : "?")
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900 pb-1">@@@(Model.User?.Name?.ToLower().Replace(" ", "_") ?? "kullanici")</p>
+                                <p class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded inline-block">İlan Sahibi</p>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Bubble -->
+                         <div class="relative hidden xl:block">
+                            <div class="absolute right-0 bottom-full mb-2 w-64 bg-white p-4 rounded-2xl rounded-br-none shadow-lg border text-sm text-gray-600 animate-bounce-slow">
+                                <div class="flex items-start gap-3">
+                                    <div class="p-1.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shrink-0">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-900 mb-1">PetAdopt AI</p>
+                                        <p class="text-xs leading-relaxed">Merhaba! @Model.Name hakkında merak ettiğin her şeyi sorabilirsin. Örn: "Apartmana uygun mu?"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Butonlar -->
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <button onclick="startChat(@Model.Id)" class="flex-1 bg-white border border-gray-300 text-gray-900 py-3 px-4 rounded-xl hover:bg-gray-50 transition font-medium flex items-center justify-center gap-2 shadow-sm">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                            Mesaj Gönder
+                        </button>
+                        <button class="p-3 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition text-gray-600 shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        </button>
+                    </div>
+
+                    <button onclick="sendAdoptionRequest(@Model.Id)" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl hover:opacity-90 transition font-medium flex items-center justify-center gap-2 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Sahiplen
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating AI Button for Mobile/General Access -->
+     <div class="fixed bottom-6 right-6">
+        <button class="w-14 h-14 bg-gradient-to-tr from-yellow-400 to-orange-500 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 transition-transform cursor-pointer border-4 border-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+async function startChat(listingId) {
+    try {
+        const response = await fetch('/Messages/StartChat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ listingId: listingId })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            window.location.href = `/Messages/Chat/${result.conversationId}`;
+        } else if (response.status === 401) {
+             Swal.fire({
+                title: 'Giriş Yapın',
+                text: 'Mesaj göndermek için lütfen giriş yapın.',
+                icon: 'info',
+                confirmButtonText: 'Giriş Yap',
+                confirmButtonColor: '#4f46e5'
+            }).then(() => {
+                window.location.href = '/AuthMvc/Login';
+            });
+        } else {
+            const text = await response.text();
+             Swal.fire({
+                title: 'Hata',
+                text: text || 'Sohbet başlatılamadı.',
+                icon: 'error',
+                confirmButtonText: 'Tamam',
+                confirmButtonColor: '#4f46e5'
+            });
+        }
+    } catch (error) {
+        console.error(error);
+         Swal.fire({
+            title: 'Hata',
+            text: 'Bir sorun oluştu. Lütfen tekrar deneyin.',
+            icon: 'error',
+            confirmButtonText: 'Tamam',
+            confirmButtonColor: '#4f46e5'
+        });
+    }
+}
+
+async function sendAdoptionRequest(listingId) {
+    try {
+        const response = await fetch('/Messages/SendAdoptionRequest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ listingId: listingId })
+        });
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Talebiniz İletildi!',
+                text: 'İlan sahibine sahiplenme isteğiniz başarıyla gönderildi ve sohbet başlatıldı.',
+                icon: 'success',
+                confirmButtonText: 'Tamam',
+                confirmButtonColor: '#4f46e5',
+                background: '#fff',
+                color: '#1f2937'
+            });
+        } else if (response.status === 401) {
+             Swal.fire({
+                title: 'Giriş Yapmalısınız',
+                text: 'Sahiplenme talebi göndermek için lütfen giriş yapın.',
+                icon: 'warning',
+                confirmButtonText: 'Giriş Yap',
+                confirmButtonColor: '#4f46e5'
+            }).then(() => {
+                window.location.href = '/AuthMvc/Login';
+            });
+        } else {
+            const text = await response.text(); // or json error message
+             Swal.fire({
+                title: 'Hata',
+                text: 'Talep gönderilemedi: ' + (text || 'Bilinmeyen hata'),
+                icon: 'error',
+                confirmButtonText: 'Tamam'
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        Swal.fire({
+            title: 'Hata',
+            text: 'Bir sorun oluştu.',
+            icon: 'error',
+            confirmButtonText: 'Tamam'
+        });
+    }
+}
+</script>
+
+<style>
+@@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(-5%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 3s infinite;
+}
+</style>

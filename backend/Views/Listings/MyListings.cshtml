@@ -1,0 +1,110 @@
+@model List<backend.Models.Listing>
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "İlanlarım";
+}
+
+<div class="min-h-[calc(100vh-73px)] bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="mb-6 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/Home/Dashboard" class="p-2 hover:bg-white rounded-full transition">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </a>
+                <h1 class="text-2xl font-bold text-gray-900">İlanlarım</h1>
+            </div>
+            <a href="/Listings/Create" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Yeni İlan
+            </a>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (Model != null && Model.Count > 0)
+        {
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach (var listing in Model)
+                {
+                    List<string> images = new List<string>();
+                    if (!string.IsNullOrEmpty(listing.ImagesJson))
+                    {
+                        try { images = JsonSerializer.Deserialize<List<string>>(listing.ImagesJson) ?? new List<string>(); } catch {}
+                    }
+                    var mainImage = images.FirstOrDefault() ?? "https://via.placeholder.com/400?text=Resim+Yok";
+
+                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition">
+                        <div class="aspect-square relative">
+                            <img src="@mainImage" alt="@listing.Name" class="w-full h-full object-cover" />
+                            <span class="absolute top-2 right-2 @(listing.IsActive ? "bg-green-600" : "bg-red-600") text-white text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                @(listing.IsActive ? "Aktif" : "Pasif")
+                            </span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-lg text-gray-900 mb-1">@listing.Name</h3>
+                            <p class="text-sm text-gray-600 mb-2">@listing.Type • @listing.Age</p>
+                            <p class="text-sm text-gray-500 mb-1">@listing.City</p>
+                            @if (!string.IsNullOrEmpty(listing.Breed))
+                            {
+                                <p class="text-xs text-gray-400">@listing.Breed</p>
+                            }
+                            
+                            <div class="border-t my-3"></div>
+                            
+                            <div class="flex gap-2">
+                                <button class="flex-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition">
+                                    Düzenle
+                                </button>
+                                <form id="deleteForm-@listing.Id" action="/Listings/Delete/@listing.Id" method="post" class="flex-1">
+                                    <button type="button" onclick="confirmDelete(@listing.Id)" class="w-full px-3 py-2 bg-white border border-gray-300 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition">
+                                        Sil
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+             <div class="bg-white rounded-xl shadow-sm border p-12 text-center">
+                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <p class="text-gray-500 mb-4">Henüz ilan yayınlamadınız.</p>
+                <a href="/Listings/Create" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    İlan Oluştur
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmDelete(id) {
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu ilanı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'İptal',
+            background: '#fff',
+            color: '#1f2937'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteForm-' + id).submit();
+            }
+        });
+    }
+</script>

@@ -30,6 +30,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Services
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
@@ -100,8 +101,8 @@ using (var scope = app.Services.CreateScope())
         // Not: Production'da bu kaldırılmalı
         try
         {
-            context.Database.EnsureDeleted();
-            logger.LogInformation("Eski veritabanı silindi.");
+            // context.Database.EnsureDeleted(); // Verileri korumak için kapatıldı
+            // logger.LogInformation("Eski veritabanı silindi.");
         }
         catch (Exception exDel)
         {

@@ -151,6 +151,7 @@ function App() {
           <h1 className="text-3xl font-bold text-green-600 mb-4">Kayıt Başarılı!</h1>
           <p className="text-gray-600 mb-4">Hesabınız başarıyla oluşturuldu. Giriş yapabilirsiniz.</p>
           <button
+            type="button"
             onClick={handleSwitchToLogin}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
           >
@@ -163,16 +164,16 @@ function App() {
 
   if (showLogin) {
     return (
-      <LoginView 
-        onLogin={handleLogin} 
+      <LoginView
+        onLogin={handleLogin}
         onSwitchToRegister={handleSwitchToRegister}
       />
     )
   }
 
   return (
-    <RegisterView 
-      onRegister={handleRegister} 
+    <RegisterView
+      onRegister={handleRegister}
       onSwitchToLogin={handleSwitchToLogin}
     />
   )
