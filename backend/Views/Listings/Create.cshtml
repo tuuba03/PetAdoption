@@ -1,0 +1,99 @@
+@{
+    ViewData["Title"] = "Yeni İlan Oluştur";
+}
+
+<div class="min-h-[calc(100vh-73px)] bg-gray-50">
+    <div class="max-w-4xl mx-auto p-8">
+        <div class="mb-6 flex items-center gap-4">
+            <a href="/Listings/Index" class="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </a>
+            <h1 class="text-2xl font-bold">Yeni İlan Oluştur</h1>
+        </div>
+
+        <form action="/Listings/Create" method="post" enctype="multipart/form-data">
+            <div class="space-y-6">
+                <!-- Fotoğraf Yükleme -->
+                <div class="bg-white rounded-xl border shadow-sm">
+                    <div class="flex flex-col space-y-1.5 p-6 pb-0">
+                         <h3 class="font-semibold leading-none tracking-tight">Fotoğraflar</h3>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <!-- Helper script to show previews could be added here, simplified for MVC post -->
+                            <label class="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">
+                                <i data-lucide="upload" class="w-8 h-8 text-gray-400 mb-2"></i>
+                                <span class="text-sm text-gray-500">Fotoğraf Ekle</span>
+                                <input type="file" name="images" accept="image/*" multiple class="hidden" />
+                            </label>
+                        </div>
+                        <p class="text-sm text-gray-500">
+                            En az bir fotoğraf yükleyin.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Temel Bilgiler -->
+                <div class="bg-white rounded-xl border shadow-sm">
+                    <div class="flex flex-col space-y-1.5 p-6 pb-0">
+                         <h3 class="font-semibold leading-none tracking-tight">Temel Bilgiler</h3>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label for="Name" class="text-sm font-medium leading-none">İsim *</label>
+                                <input id="Name" name="Name" placeholder="Örn: Pamuk" required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                            </div>
+                            <div class="space-y-2">
+                                <label for="Age" class="text-sm font-medium leading-none">Yaş *</label>
+                                <input id="Age" name="Age" placeholder="Örn: 2 yaşında" required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                            </div>
+                            <div class="space-y-2">
+                                <label for="Type" class="text-sm font-medium leading-none">Tür *</label>
+                                <select id="Type" name="Type" required class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+                                    <option value="">Tür Seçin</option>
+                                    <option value="Kedi">Kedi</option>
+                                    <option value="Köpek">Köpek</option>
+                                    <option value="Kuş">Kuş</option>
+                                    <option value="Tavşan">Tavşan</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="Breed" class="text-sm font-medium leading-none">Cins</label>
+                                <input id="Breed" name="Breed" placeholder="Örn: Tekir" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                            </div>
+                            <div class="space-y-2">
+                                <label for="City" class="text-sm font-medium leading-none">Şehir *</label>
+                                <select id="City" name="City" required class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+                                    <option value="">Şehir Seçin</option>
+                                    <option value="İstanbul">İstanbul</option>
+                                    <option value="Ankara">Ankara</option>
+                                    <option value="İzmir">İzmir</option>
+                                    <option value="Antalya">Antalya</option>
+                                    <option value="Bursa">Bursa</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="Health" class="text-sm font-medium leading-none">Sağlık Durumu *</label>
+                                <input id="Health" name="Health" placeholder="Örn: Aşıları tam" required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="Description" class="text-sm font-medium leading-none">Açıklama *</label>
+                            <textarea id="Description" name="Description" rows="6" required placeholder="Evcil hayvanınız hakkında detaylı bilgi verin..." class="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <a href="/Listings/Index" class="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+                        İptal
+                    </a>
+                    <button type="submit" class="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-9 px-4 py-2">
+                        İlanı Yayınla
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

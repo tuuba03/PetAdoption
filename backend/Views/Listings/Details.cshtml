@@ -1,0 +1,150 @@
+@model backend.Models.Listing
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="min-h-[calc(100vh-73px)] bg-gray-50">
+    <div class="max-w-7xl mx-auto p-8">
+        <div class="mb-6 flex items-center gap-4">
+            <a href="/Listings/Index" class="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </a>
+            
+             <nav class="flex" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="/Listings/Index" class="text-sm font-medium text-gray-700 hover:text-blue-600">
+                            Ana Sayfa
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 mx-1"></i>
+                            <span class="text-sm font-medium text-gray-500">@Model.Type</span>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 mx-1"></i>
+                            <span class="text-sm font-medium text-gray-500">@Model.Name</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Left: Photos -->
+            <div class="space-y-4">
+                <div class="aspect-square rounded-lg overflow-hidden bg-white border">
+                    <img src="@(Model.Images.FirstOrDefault() ?? "https://via.placeholder.com/400?text=Resim+Yok")"
+                         alt="@Model.Name"
+                         id="mainImage"
+                         class="w-full h-full object-cover" />
+                </div>
+                
+                @if (Model.Images.Count > 1)
+                {
+                    <div class="flex gap-4 overflow-x-auto">
+                        @foreach (var img in Model.Images)
+                        {
+                             <button onclick="document.getElementById('mainImage').src = '@img'"
+                                     class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-600 transition-all">
+                                <img src="@img" class="w-full h-full object-cover" />
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Right: Info -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl border shadow-sm">
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <h1 class="text-3xl font-bold mb-2">@Model.Name</h1>
+                            <div class="flex items-center gap-4 text-gray-600">
+                                <span class="bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                                    @Model.Type
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                    <span>@Model.City</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 py-4 border-y">
+                             <div class="flex justify-between">
+                                <span class="text-gray-600">Yaş:</span>
+                                <span class="font-medium">@Model.Age</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Cins:</span>
+                                <span class="font-medium">@Model.Breed</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Sağlık:</span>
+                                <span class="font-medium">@Model.Health</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="font-semibold mb-2">Açıklama</h3>
+                            <p class="text-gray-700 leading-relaxed">@Model.Description</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border shadow-sm">
+                    <div class="p-6">
+                        <h3 class="font-semibold mb-3">Sahiplendiren</h3>
+                        <div class="flex items-center gap-3">
+                             <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                 <i data-lucide="user" class="w-6 h-6 text-gray-400"></i>
+                             </div>
+                            <div>
+                                <p class="font-medium">@Model.UserName</p>
+                                <p class="text-sm text-gray-500">İlan Sahibi</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <a href="/Messages/Chat?with=@Model.UserName" class="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-8 bg-blue-600 hover:bg-blue-700 text-white">
+                        <i data-lucide="message-circle" class="w-5 h-5 mr-2"></i>
+                        Mesaj Gönder
+                    </a>
+                    
+                    <!-- Scenario 3: AI Chat Trigger -->
+                    <button onclick="openAIChat()" class="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-8 border border-gray-300 hover:bg-gray-100">
+                        <i data-lucide="bot" class="w-5 h-5 mr-2"></i>
+                         AI ile Sohbet
+                    </button>
+                    
+                     <a href="/Ownership/Create?listingId=@Model.Id" class="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white">
+                       <i data-lucide="file-check" class="w-5 h-5 mr-2"></i>
+                        Sahiplen
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openAIChat() {
+        // Trigger the AI chat logic
+        if (typeof setChatContext === 'function') {
+            setChatContext({
+                Name: '@Model.Name',
+                Type: '@Model.Type',
+                Description: '@Model.Description'
+            });
+        } else {
+             alert('Chatbot yükleniyor... Lütfen sayfayı yenileyin.');
+        }
+    }
+</script>

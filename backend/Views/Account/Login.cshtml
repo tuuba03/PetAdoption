@@ -1,0 +1,88 @@
+@{
+    ViewData["Title"] = "Giriş Yap";
+}
+
+<div class="min-h-[calc(100vh-73px)] flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 -m-4">
+    <div class="w-full max-w-md shadow-2xl bg-white rounded-lg border">
+        <div class="space-y-4 text-center pb-8 p-6">
+            <div class="flex justify-center">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-4">
+                    <i data-lucide="paw-print" class="w-12 h-12 text-white"></i>
+                </div>
+            </div>
+            <h3 class="text-3xl font-semibold leading-none tracking-tight">Hoş Geldiniz!</h3>
+            <p class="text-base text-gray-500">
+                PetAdopt hesabınıza giriş yapın
+            </p>
+        </div>
+
+        <div class="p-6 pt-0 space-y-6">
+            @if (ViewBag.Error != null)
+            {
+                <div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    @ViewBag.Error
+                </div>
+            }
+
+            <form action="/Account/Login" method="post" class="space-y-4">
+                <div class="space-y-2">
+                    <label for="email" class="text-sm font-medium leading-none">E-posta</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                         <input id="email"
+                               name="email"
+                               type="email"
+                               placeholder="ornek@email.com"
+                               class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
+                               required />
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="password" class="text-sm font-medium leading-none">Şifre</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                         <input id="password"
+                                name="password"
+                                type="password"
+                                placeholder="••••••••"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 pr-10"
+                                required />
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="rounded" />
+                        <span class="text-gray-600">Beni hatırla</span>
+                    </label>
+                    <a href="#" class="text-blue-600 hover:text-blue-700 font-medium">
+                        Şifremi unuttum
+                    </a>
+                </div>
+
+                <button type="submit"
+                        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-11 px-8 w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                    Giriş Yap
+                </button>
+            </form>
+
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="bg-white px-4 text-gray-500">veya</span>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <span class="text-gray-600">Hesabınız yok mu? </span>
+                <a href="/Account/Register" class="text-blue-600 hover:text-blue-700 font-semibold">
+                    Kayıt Ol
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+

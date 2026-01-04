@@ -1,0 +1,70 @@
+@model List<backend.Models.Listing>
+
+@{
+    ViewData["Title"] = "İlanlarım";
+}
+
+<div class="min-h-[calc(100vh-73px)] bg-gray-50">
+    <div class="max-w-6xl mx-auto p-8">
+        <div class="mb-6 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/Account/Profile" class="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                </a>
+                <h1 class="text-2xl font-bold">İlanlarım</h1>
+            </div>
+            <a href="/Listings/Create" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-10 px-4 py-2">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                Yeni İlan
+            </a>
+        </div>
+
+        @if (Model != null && Model.Count > 0)
+        {
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach (var listing in Model)
+                {
+                    <div class="bg-white rounded-lg border shadow-sm overflow-hidden">
+                        <div class="aspect-square relative">
+                            <img src="@(listing.Images.FirstOrDefault() ?? "https://via.placeholder.com/400?text=Resim+Yok")"
+                                 alt="@listing.Name"
+                                 class="w-full h-full object-cover" />
+                            <span class="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                                @(listing.IsActive ? "Aktif" : "Pasif")
+                            </span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold mb-1">@listing.Name</h3>
+                            <p class="text-sm text-gray-600 mb-2">
+                                @listing.Type • @listing.Age
+                            </p>
+                            <p class="text-sm text-gray-500">@listing.City</p>
+                            <div class="my-3 h-[1px] bg-gray-200 w-full"></div>
+                            <div class="flex gap-2">
+                                <a href="#" class="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                                    Düzenle
+                                </a>
+                                <a href="#" class="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-red-50 text-red-600 h-9 px-3">
+                                    Sil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-lg border shadow-sm p-6 text-center py-12">
+                <div class="mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-full bg-gray-100">
+                     <i data-lucide="package-plus" class="w-6 h-6 text-gray-400"></i>
+                </div>
+                <p class="text-gray-500 mb-4">Henüz ilan yayınlamadınız.</p>
+                <a href="/Listings/Create" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-10 px-4 py-2">
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    İlan Oluştur
+                </a>
+            </div>
+        }
+    </div>
+</div>

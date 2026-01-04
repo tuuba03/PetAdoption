@@ -10,14 +10,98 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-gray-50">
-    <div class="container mx-auto p-4">
+<body class="bg-gray-50 flex flex-col min-h-screen">
+    <!-- Header ported from Header.tsx -->
+    <header class="border-b bg-white sticky top-0 z-50">
+        <div class="px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <i data-lucide="paw-print" class="w-8 h-8 text-blue-600"></i>
+                <span class="text-2xl font-bold text-blue-600">PetAdopt</span>
+            </a>
+
+            <!-- Search Bar -->
+            <div class="flex-1 max-w-md mx-8 hidden md:block">
+                <form action="/Listings/Search" method="get">
+                    <input type="search" 
+                           name="query"
+                           placeholder="İlan ara..." 
+                           class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                </form>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="/Listings/Create" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2">
+                    <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+                    İlan Oluştur
+                </a>
+
+                <a href="/Messages" class="relative inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    <!-- Badge example if needed -->
+                    <!-- <span class="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white rounded-full">1</span> -->
+                </a>
+
+                <!-- User Dropdown -->
+                <div class="relative ml-3">
+                    <div>
+                        <button type="button" onclick="toggleUserDropdown()" class="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                            <span class="absolute -inset-1.5"></span>
+                            <span class="sr-only">Open user menu</span>
+                             <div class="h-10 w-10 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground">
+                                <i data-lucide="user" class="w-5 h-5"></i>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Dropdown menu -->
+                    <div id="user-dropdown" class="hidden absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                        <div class="px-4 py-2 text-sm font-semibold text-gray-700 border-b">Hesabım</div>
+                        <a href="/Account/Profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Profilim</a>
+                        <a href="/Listings/MyListings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">İlanlarım</a>
+                        <a href="/Ownership/Cards" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Sahiplik Kartlarım</a>
+                        <div class="border-t"></div>
+                        <a href="/Account/Logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center" role="menuitem">
+                            <i data-lucide="log-out" class="w-4 h-4 mr-2"></i> Çıkış Yap
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4">
         @RenderBody()
-    </div>
+    </main>
+
+    <footer class="bg-white border-t mt-auto">
+        <div class="mx-auto max-w-7xl px-6 py-4 md:flex md:items-center md:justify-between lg:px-8">
+            <div class="mt-8 md:order-1 md:mt-0">
+                <p class="text-center text-xs leading-5 text-gray-500">&copy; 2024 PetAdopt. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <partial name="_Chatbot" />
 
     <script src="~/js/site.js"></script>
     <script>
         lucide.createIcons();
+
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('user-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.closest('#user-menu-button')) {
+                const dropdown = document.getElementById('user-dropdown');
+                if (dropdown && !dropdown.classList.contains('hidden')) {
+                    dropdown.classList.add('hidden');
+                }
+            }
+        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

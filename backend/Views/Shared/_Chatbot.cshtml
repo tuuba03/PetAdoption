@@ -1,0 +1,201 @@
+<!-- Chat Bot Bubble -->
+<div id="chat-container" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+    
+    <!-- Chat Window -->
+    <div id="chat-window" class="bg-white w-96 rounded-2xl shadow-2xl overflow-hidden mb-4 transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-auto hidden border border-gray-100">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-full">
+                    <i data-lucide="bot" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold">PetAdopt Asistan</h3>
+                    <p class="text-xs text-blue-100 flex items-center gap-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        Çevrimiçi
+                    </p>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="hover:bg-white/20 p-1 rounded transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-messages" class="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <!-- Welcome Message -->
+            <div class="flex justify-start">
+                <div class="bg-white text-gray-800 rounded-2xl rounded-tl-none px-4 py-3 max-w-[85%] shadow-sm border">
+                    <p class="text-sm">Merhaba! Ben PetAdopt asistanıyım. Sana nasıl yardımcı olabilirim? 🐾</p>
+                    <span class="text-[10px] text-gray-400 mt-1 block">Şimdi</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="p-4 bg-white border-t">
+            <div class="relative">
+                <input type="text" 
+                       id="chat-input"
+                       placeholder="Bir soru sorun..." 
+                       class="w-full pl-4 pr-12 py-3 bg-gray-100 border-0 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
+                       onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" 
+                        class="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="send-btn">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="mt-2 text-center">
+                <p class="text-[10px] text-gray-400">Gemini AI tarafından desteklenmektedir ✨</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toggle Button -->
+    <button onclick="toggleChat()" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 group pointer-events-auto">
+        <i data-lucide="message-circle-question" class="w-6 h-6 group-hover:rotate-12 transition-transform"></i>
+    </button>
+</div>
+
+<script>
+    let isChatOpen = false;
+    let currentPetContext = null;
+
+    function toggleChat() {
+        const window = document.getElementById('chat-window');
+        isChatOpen = !isChatOpen;
+        
+        if (isChatOpen) {
+            window.classList.remove('hidden');
+            // Small delay to allow display:block to apply before transition
+            setTimeout(() => {
+                window.classList.remove('translate-y-10', 'opacity-0');
+            }, 10);
+            
+            // Focus input
+            document.getElementById('chat-input').focus();
+        } else {
+            window.classList.add('translate-y-10', 'opacity-0');
+            setTimeout(() => {
+                window.classList.add('hidden');
+            }, 300);
+        }
+    }
+
+    // Call this from Details page to set context
+    // context: { Name: "...", Type: "...", Description: "..." }
+    function setChatContext(context) {
+        currentPetContext = context;
+        // Optionally add a system message to UI saying context is set
+        addMessage(`Şu an ${context.Name} hakkında konuşuyoruz.`, 'bot');
+        if (!isChatOpen) toggleChat();
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const btn = document.getElementById('send-btn');
+        const message = input.value.trim();
+        
+        if (!message) return;
+
+        // Visual updates
+        input.value = '';
+        input.disabled = true;
+        btn.disabled = true;
+        addMessage(message, 'user');
+
+        // Prepare Payload
+        const payload = {
+            UserMessage: message,
+            Pet: currentPetContext || { Name: "Genel", Type: "Genel", Description: "Genel sohbet" }
+        };
+
+        try {
+            // Show typing indicator
+            const typingId = showTyping();
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            // Remove typing indicator
+            removeTyping(typingId);
+
+            if (!response.ok) throw new Error('Network error');
+
+            const data = await response.json();
+            addMessage(data.response || data.Response, 'bot'); // Case sensitivity check
+
+        } catch (error) {
+            console.error('Chat Error:', error);
+            addMessage('Üzgünüm, şu an cevap veremiyorum. Lütfen daha sonra tekrar deneyin.', 'bot');
+        } finally {
+            input.disabled = false;
+            btn.disabled = false;
+            input.focus();
+        }
+    }
+
+    function showTyping() {
+        const id = 'typing-' + Date.now();
+        const chatMessages = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = 'flex justify-start animate-fade-in';
+        div.innerHTML = `
+            <div class="bg-white text-gray-500 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm border flex gap-1 items-center h-10">
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+            </div>
+        `;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return id;
+    }
+
+    function removeTyping(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+    function addMessage(text, sender) {
+        const chatMessages = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        const isUser = sender === 'user';
+        
+        div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`;
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        div.innerHTML = `
+            <div class="${isUser ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-gray-800 border rounded-tl-none'} rounded-2xl px-4 py-2 max-w-[85%] shadow-sm">
+                <p class="text-sm leading-relaxed">${text}</p>
+                <span class="text-[10px] ${isUser ? 'text-blue-100' : 'text-gray-400'} mt-1 block text-right">${time}</span>
+            </div>
+        `;
+
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+</script>
+
+<style>
+    @@keyframes fade-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fade-in 0.3s ease-out forwards;
+    }
+</style>

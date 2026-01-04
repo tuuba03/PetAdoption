@@ -58,45 +58,6 @@ public class MessagesController : Controller
     }
 
     [HttpGet]
-    public IActionResult Chat(string id, string with)
-    {
-        Conversation conversation = null;
-        
-        if (!string.IsNullOrEmpty(id))
-        {
-            conversation = _conversations.FirstOrDefault(c => c.Id == id);
-        }
-        else if (!string.IsNullOrEmpty(with))
-        {
-             // Try to find conversation by User Name (Mock logic)
-             conversation = _conversations.FirstOrDefault(c => c.OtherUserName == with);
-             
-             // If not found, create a new one (Mock)
-             if (conversation == null)
-            {
-                 conversation = new Conversation
-                {
-                    PetId = "999", // Unknown
-                    PetName = "İlan",
-                    PetType = "Bilinmiyor",
-                    OtherUserName = with,
-                    OtherUserPhone = "-",
-                    PetImage = "https://via.placeholder.com/150",
-                    Messages = new List<Message>()
-                };
-                _conversations.Add(conversation);
-            }
-        }
-
-        if (conversation == null) return NotFound();
-
-        // Mark as read
-        conversation.UnreadCount = 0;
-        
-        return View(conversation);
-    }
-
-    [HttpGet]
     public IActionResult GetConversation(string id)
     {
         var conversation = _conversations.FirstOrDefault(c => c.Id == id);

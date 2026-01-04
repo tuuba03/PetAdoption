@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews().AddNewtonsoftJson();
+builder.Services.AddSingleton<backend.Services.ListingService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -26,7 +27,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.MapControllers();
 

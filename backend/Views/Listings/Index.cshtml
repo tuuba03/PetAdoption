@@ -1,0 +1,105 @@
+@model List<backend.Models.Listing>
+
+@{
+    ViewData["Title"] = "İlanlar";
+    var types = new[] { "Kedi", "Köpek", "Kuş", "Tavşan" };
+    var cities = new[] { "İstanbul", "Ankara", "İzmir", "Antalya", "Bursa" };
+}
+
+<div class="min-h-screen bg-gray-50 flex flex-col md:flex-row gap-6">
+    <!-- Filter Panel (Sidebar on desktop, top on mobile) -->
+    <div class="w-full md:w-64 flex-shrink-0 space-y-6">
+        <div class="bg-white p-4 rounded-lg border shadow-sm sticky top-24">
+            <h3 class="font-semibold mb-4 flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4"></i> Filtreler
+            </h3>
+            
+            <form method="get" action="/Listings/Index">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium mb-1 block">Tür</label>
+                        <select name="type" class="w-full border rounded-md p-2 text-sm">
+                            <option value="">Tümü</option>
+                            @foreach (var t in types)
+                            {
+                                <option value="@t" selected="@(ViewBag.SelectedType == t)">@t</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium mb-1 block">Şehir</label>
+                        <select name="city" class="w-full border rounded-md p-2 text-sm">
+                             <option value="">Tümü</option>
+                            @foreach (var c in cities)
+                            {
+                                <option value="@c" selected="@(ViewBag.SelectedCity == c)">@c</option>
+                            }
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white rounded-md p-2 text-sm hover:bg-blue-700 transition">
+                        Filtrele
+                    </button>
+                    
+                    <a href="/Listings/Index" class="block text-center text-sm text-gray-500 hover:text-gray-700 mt-2">
+                        Filtreleri Temizle
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1">
+        <div class="mb-6">
+             <div class="mb-4 text-gray-600">
+                @Model.Count ilan bulundu
+            </div>
+
+            @if (Model.Count > 0)
+            {
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var item in Model)
+                    {
+                        <div class="bg-white rounded-lg border shadow-sm overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                            <div class="aspect-square relative">
+                                <img src="@(item.Images.FirstOrDefault() ?? "https://via.placeholder.com/400?text=Resim+Yok")"
+                                     alt="@item.Name"
+                                     class="w-full h-full object-cover" />
+                                <span class="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded badge">
+                                    @item.Type
+                                </span>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-semibold text-lg mb-1">@item.Name</h3>
+                                <p class="text-sm text-gray-600 mb-2">
+                                    @item.Age • @item.City
+                                </p>
+                                <p class="text-xs text-gray-500 mb-2">@item.Breed</p>
+                                <p class="text-sm text-gray-700 line-clamp-2 mb-3">
+                                    @item.Description.Length > 100 ? item.Description.Substring(0, 100) + "..." : item.Description
+                                </p>
+                                <div class="flex items-center justify-between mt-4">
+                                    <span class="text-xs text-gray-500">@item.UserName</span>
+                                    <a href="/Listings/Details/@item.Id" class="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 transition">
+                                        Detay
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-12">
+                    <p class="text-gray-500 text-lg mb-4">İlan bulunamadı</p>
+                    <p class="text-gray-400 text-sm">
+                        Filtreleri değiştirerek tekrar deneyin
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

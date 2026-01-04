@@ -11,6 +11,9 @@ _ReSharper.Caches/
 _ReSharper.Projects/
 *.suo
 
+# Configuration
+backend/appsettings.json
+
 # Node.js / Frontend
 node_modules/
 dist/

@@ -43,7 +43,7 @@ public class ChatController : ControllerBase
         };
 
         var content = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync($"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}", content);
+        var response = await _httpClient.PostAsync($"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}", content);
 
         if (!response.IsSuccessStatusCode)
         {
