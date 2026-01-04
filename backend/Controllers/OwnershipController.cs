@@ -33,6 +33,22 @@ public class OwnershipController : Controller
 
         return View(ownerships);
     }
+    [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        var ownership = await _context.Ownerships
+            .Include(o => o.Listing)
+            .Include(o => o.Owner)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (ownership == null)
+        {
+            return NotFound();
+        }
+
+        return View(ownership);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateManual(string Name, string Type, string Breed, string Age, string City, string Health, string Description, DateTime? AdoptionDate, string OwnerName, string OwnerPhone, IFormFile? Image)
     {

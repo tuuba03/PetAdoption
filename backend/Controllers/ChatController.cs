@@ -12,8 +12,8 @@ public class ChatController : ControllerBase
 {
     private readonly IConfiguration _configuration;
     private readonly HttpClient _httpClient; 
-    // Switching to "gemini-pro" as it is the most widely supported model and "flash" variants were returning 404.
-    private const string GeminiModelId = "gemini-pro"; 
+    // Switching to "gemini-2.5-flash" as requested by user.
+    private const string GeminiModelId = "gemini-2.5-flash"; 
 
     public ChatController(IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
@@ -25,7 +25,8 @@ public class ChatController : ControllerBase
     [HttpGet("test-models")]
 public async Task<IActionResult> ListModels()
 {
-    var apiKey = _configuration["Gemini:ApiKey"];
+    // Read from Environment Variable loaded by DotNetEnv
+    var apiKey = System.Environment.GetEnvironmentVariable("GOOGLE_API_KEY");
     var url = $"https://generativelanguage.googleapis.com/v1beta/models?key={apiKey}";
     var response = await _httpClient.GetAsync(url);
     var content = await response.Content.ReadAsStringAsync();
@@ -36,17 +37,17 @@ public async Task<IActionResult> ListModels()
     {
         try
         {
-            var apiKey = _configuration["Gemini:ApiKey"];
-            if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Contains("YOUR_VALID_API_KEY"))
+            // Read from Environment Variable directly
+            var apiKey = System.Environment.GetEnvironmentVariable("GOOGLE_API_KEY");
+            
+            if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Contains("YOUR_API_KEY_HERE"))
             {
-                return Ok(new { Response = "❌ API Anahtarı eksik veya hatalı yapılandırılmış." });
+                return Ok(new { Response = "❌ API Anahtarı eksik veya .env dosyası yapılandırılmamış." });
             }
 
-            // The Google.GenAI library uses 'Client' as the main entry point (based on user snippet).
-            // It gets the key from environment variable usually, but let's try passing it if constructor allows.
-            // If Client() doesn't take args, we must rely on Env var.
-            // User snippet: var client = new Client();
-            System.Environment.SetEnvironmentVariable("GOOGLE_API_KEY", apiKey); 
+            // The Google.GenAI library uses 'Client' as the main entry point.
+            // We ensure the env var is set (though DotNetEnv did it globally, redundancy is fine)
+            // System.Environment.SetEnvironmentVariable("GOOGLE_API_KEY", apiKey); // Already set by DotNetEnv logic
             var client = new Client();
             
             // 2. Validate Request
@@ -86,8 +87,10 @@ public async Task<IActionResult> ListModels()
     private string BuildPrompt(ChatRequest request)
     {
          var sb = new StringBuilder();
-        sb.AppendLine("Sen profesyonel ve samimi bir evcil hayvan sahiplendirme asistanısın. Görevin potansiyel sahiplere yardımcı olmak.");
-        sb.AppendLine("Aşağıdaki ilan detaylarına göre kullanıcının sorusunu cevapla:");
+        sb.AppendLine("Sen bir evcil hayvan sahiplendirme asistanısın. Aşağıdaki hayvan hakkında soruları cevaplayacaksın.");
+        sb.AppendLine("Cevabı verirken bu hayvana ait özellikleri ve açıklamadaki detayları kullan. Genel geçer veteriner tavsiyeleri verme.");
+        sb.AppendLine("Eğer mama veya bakım sorulursa, genel konuşmak yerine spesifik içerik önerileri ver (örn: 'somonlu kısır kedi maması', 'kızılcık özlü mama'). Marka ismi vermeden içeriğe odaklan.");
+        sb.AppendLine("Cevabın kısa, samimi ve öz olsun. En fazla 100 kelime kullan.");
         sb.AppendLine("---");
         sb.AppendLine($"🐾 İsim: {request.Pet.Name}");
         sb.AppendLine($"📍 Tür: {request.Pet.Type}");

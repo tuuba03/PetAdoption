@@ -321,8 +321,12 @@
     function showQRCode(id, name) {
         document.getElementById('qrcode').innerHTML = '';
         document.getElementById('qrPetName').innerText = name;
+        
+        // Generate full URL for verification
+        const url = window.location.origin + "/Ownership/Details/" + id;
+        
         new QRCode(document.getElementById('qrcode'), {
-            text: "petadopt-ownership:" + id,
+            text: url,
             width: 150,
             height: 150
         });

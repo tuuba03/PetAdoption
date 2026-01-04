@@ -162,4 +162,116 @@ public class ListingsController : Controller
         TempData["SuccessMessage"] = "İlan başarıyla silindi.";
         return RedirectToAction("MyListings");
     }
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        if (string.IsNullOrEmpty(HttpContext.Session.GetString("Token")))
+        {
+            return RedirectToAction("Login", "AuthMvc");
+        }
+
+        var userIdStr = HttpContext.Session.GetString("UserId");
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+        {
+             return RedirectToAction("Login", "AuthMvc");
+        }
+
+        var listing = await _context.Listings.FirstOrDefaultAsync(l => l.Id == id);
+        
+        if (listing == null)
+        {
+            return NotFound();
+        }
+
+        // Only allow owner to edit
+        if (listing.UserId != userId)
+        {
+            return Unauthorized();
+        }
+
+        return View(listing);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Edit(int id, Listing model, List<IFormFile> images)
+    {
+        if (string.IsNullOrEmpty(HttpContext.Session.GetString("Token")))
+        {
+             return RedirectToAction("Login", "AuthMvc");
+        }
+
+         var userIdStr = HttpContext.Session.GetString("UserId");
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+        {
+             return RedirectToAction("Login", "AuthMvc");
+        }
+
+        var existingListing = await _context.Listings.FirstOrDefaultAsync(l => l.Id == id);
+        
+        if (existingListing == null)
+        {
+            return NotFound();
+        }
+
+         if (existingListing.UserId != userId)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            // Update fields
+            existingListing.Name = model.Name;
+            existingListing.Type = model.Type;
+            existingListing.Breed = model.Breed;
+            existingListing.Age = model.Age;
+            existingListing.City = model.City;
+            existingListing.Health = model.Health;
+            existingListing.Description = model.Description;
+            // IsActive status usually remains unless specific logic changes it
+
+            // Handle New Images
+            var currentImages = !string.IsNullOrEmpty(existingListing.ImagesJson) 
+                                ? JsonSerializer.Deserialize<List<string>>(existingListing.ImagesJson) ?? new List<string>() 
+                                : new List<string>();
+
+            if (images != null && images.Count > 0)
+            {
+                var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "listings");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                foreach (var file in images)
+                {
+                    if (file.Length > 0 && file.ContentType.StartsWith("image/"))
+                    {
+                        var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                        var filePath = Path.Combine(uploadsFolder, fileName);
+                        
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+
+                        currentImages.Add($"/uploads/listings/{fileName}");
+                    }
+                }
+                
+                 existingListing.ImagesJson = JsonSerializer.Serialize(currentImages);
+            }
+
+            _context.Listings.Update(existingListing);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "İlan başarıyla güncellendi.";
+            return RedirectToAction("MyListings");
+        }
+        catch (Exception ex)
+        {
+             ModelState.AddModelError("", "Bir hata oluştu: " + ex.Message);
+             return View(model);
+        }
+    }
 }

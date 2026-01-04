@@ -1,0 +1,117 @@
+@model backend.Models.Ownership
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Hayvan Sahiplik Kartı";
+    Layout = "_Layout"; // Or null if minimal
+}
+
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        @{
+            List<string> images = new List<string>();
+            var listing = Model.Listing;
+            if (listing != null && !string.IsNullOrEmpty(listing.ImagesJson))
+            {
+                try { images = JsonSerializer.Deserialize<List<string>>(listing.ImagesJson) ?? new List<string>(); } catch {}
+            }
+            var mainImage = images.FirstOrDefault() ?? "https://via.placeholder.com/400?text=Resim+Yok";
+            
+            // Display Data Logic
+            string displayOwner = Model.Owner?.Name;
+            string displayPhone = Model.Owner?.Phone;
+            string userNote = "";
+
+            if (!string.IsNullOrEmpty(Model.Notes) && Model.Notes.StartsWith("{"))
+            {
+                try {
+                        using (JsonDocument doc = JsonDocument.Parse(Model.Notes))
+                        {
+                            if (doc.RootElement.TryGetProperty("DisplayOwner", out var ownerEl)) displayOwner = ownerEl.GetString() ?? displayOwner;
+                            if (doc.RootElement.TryGetProperty("DisplayPhone", out var phoneEl)) displayPhone = phoneEl.GetString() ?? displayPhone;
+                            if (doc.RootElement.TryGetProperty("UserNote", out var noteEl)) userNote = noteEl.GetString() ?? "";
+                        }
+                } catch {}
+            }
+            else if (!string.IsNullOrEmpty(Model.Notes))
+            {
+                userNote = Model.Notes;
+            }
+        }
+
+        <!-- Card Container -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden relative border border-gray-100 transform transition-all hover:scale-105 duration-300">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-700 p-6 text-white text-center">
+                <div class="flex justify-center mb-4">
+                    <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm shadow-inner">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <h1 class="text-2xl font-bold tracking-wider uppercase">Resmi Sahiplik Kartı</h1>
+                <p class="text-blue-100 text-sm mt-1">Bu kart dijital olarak doğrulanmıştır.</p>
+            </div>
+
+            <div class="p-8">
+                <!-- Pet Image -->
+                <div class="flex justify-center -mt-16 mb-6">
+                    <div class="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
+                        <img src="@mainImage" alt="@(listing?.Name)" class="w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <!-- Pet Info -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-extrabold text-gray-900 mb-2">@(listing?.Name)</h2>
+                    <div class="inline-flex gap-2 justify-center">
+                        <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">@(listing?.Type)</span>
+                        <span class="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-semibold">@(listing?.Breed)</span>
+                    </div>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="grid grid-cols-2 gap-4 text-sm border-t border-b border-gray-100 py-6 mb-6">
+                    <div class="space-y-1">
+                        <p class="text-gray-500">Yaş</p>
+                        <p class="font-semibold text-gray-900">@(listing?.Age)</p>
+                    </div>
+                    <div class="space-y-1 text-right">
+                        <p class="text-gray-500">Şehir</p>
+                        <p class="font-semibold text-gray-900">@(listing?.City)</p>
+                    </div>
+                    <div class="space-y-1">
+                         <p class="text-gray-500">Sağlık</p>
+                         <p class="font-semibold text-green-600">@(listing?.Health ?? "Belirtilmemiş")</p>
+                    </div>
+                    <div class="space-y-1 text-right">
+                        <p class="text-gray-500">Tarih</p>
+                        <p class="font-semibold text-gray-900">@Model.AdoptionDate.ToString("dd.MM.yyyy")</p>
+                    </div>
+                </div>
+
+                <!-- Owner Info -->
+                <div class="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Sahip</p>
+                        <p class="font-bold text-gray-900">@displayOwner</p>
+                    </div>
+                     <div class="text-right">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">İletişim</p>
+                        <p class="font-bold text-gray-900">@displayPhone</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="bg-gray-100 px-6 py-4 text-center">
+                <p class="text-xs text-gray-500">PetAdopt © @DateTime.Now.Year - Güvenli Sahiplendirme Platformu</p>
+            </div>
+        </div>
+        
+        <div class="text-center">
+             <a href="/" class="text-blue-600 hover:text-blue-800 font-medium text-sm transition">
+                &larr; Ana Sayfaya Dön
+            </a>
+        </div>
+    </div>
+</div>

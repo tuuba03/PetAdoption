@@ -142,7 +142,7 @@ public class AuthMvcController : Controller
 
             _logger.LogInformation($"Kullanıcı giriş yaptı: {user.Email}");
 
-            TempData["SuccessMessage"] = $"Hoş geldiniz, {user.Name}!";
+            // TempData["SuccessMessage"] = $"Hoş geldiniz, {user.Name}!"; // Kullanıcı isteği üzerine kaldırıldı
             return RedirectToAction("Index", "Home");
         }
         catch (Exception ex)

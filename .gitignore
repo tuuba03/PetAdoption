@@ -7,6 +7,10 @@ backend/appsettings.json
 
 # Database
 *.db
+
+# Secrets
+.env
+backend/.env
 *.db-shm
 *.db-wal
 backend/*.db

@@ -1,0 +1,151 @@
+@model backend.Models.Listing
+@using System.Text.Json
+@{
+    ViewData["Title"] = "İlanı Düzenle";
+}
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-3xl mx-auto px-4">
+        <form asp-action="Edit" enctype="multipart/form-data" method="post" class="space-y-6">
+            
+            <!-- Fotoğraf Yönetimi -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+                <h2 class="text-lg font-semibold text-gray-900">Fotoğraflar</h2>
+                
+                <!-- Mevcut Fotoğraflar -->
+                @if (!string.IsNullOrEmpty(Model.ImagesJson))
+                {
+                    var existingImages = JsonSerializer.Deserialize<List<string>>(Model.ImagesJson) ?? new List<string>();
+                    if (existingImages.Count > 0)
+                    {
+                        <p class="text-sm font-medium text-gray-700">Mevcut Fotoğraflar:</p>
+                        <div class="grid grid-cols-4 gap-4 mb-4">
+                            @foreach (var img in existingImages)
+                            {
+                                <div class="relative aspect-square rounded-lg overflow-hidden border bg-gray-100">
+                                    <img src="@img" class="w-full h-full object-cover" />
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+
+                <div class="border-2 border-dashed border-gray-200 rounded-lg p-8 transition-colors hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer relative" id="dropZone">
+                    <input type="file" name="images" id="fileInput" multiple accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleFileSelect(event)" />
+                    
+                    <div class="text-center" id="uploadPlaceholder">
+                        <div class="w-12 h-12 bg-blue-100/50 text-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-medium text-gray-900">Yeni Fotoğraf Ekle</p>
+                        <p class="text-xs text-gray-500 mt-1">Sürükleyip bırakın veya seçin (Mevcutların yanına eklenir)</p>
+                    </div>
+
+                    <div id="imagePreview" class="hidden grid grid-cols-4 gap-4 mt-4"></div>
+                </div>
+            </div>
+
+            <!-- Temel Bilgiler Formu -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border space-y-6">
+                <h2 class="text-lg font-semibold text-gray-900">Temel Bilgiler</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label asp-for="Name" class="text-sm font-medium text-gray-700">İsim *</label>
+                        <input asp-for="Name" class="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Örn: Pamuk" required />
+                        <span asp-validation-for="Name" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label asp-for="Age" class="text-sm font-medium text-gray-700">Yaş *</label>
+                        <input asp-for="Age" class="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Örn: 2 yaşında" required />
+                        <span asp-validation-for="Age" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label asp-for="Type" class="text-sm font-medium text-gray-700">Tür *</label>
+                        <select asp-for="Type" class="w-full flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" required>
+                            <option value="">Tür Seçin</option>
+                            <option value="Kedi">Kedi</option>
+                            <option value="Köpek">Köpek</option>
+                            <option value="Kuş">Kuş</option>
+                            <option value="Tavşan">Tavşan</option>
+                        </select>
+                        <span asp-validation-for="Type" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label asp-for="Breed" class="text-sm font-medium text-gray-700">Cins</label>
+                        <input asp-for="Breed" class="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Örn: Tekir" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label asp-for="City" class="text-sm font-medium text-gray-700">Şehir *</label>
+                        <select asp-for="City" class="w-full flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" required>
+                             <option value="">Şehir Seçin</option>
+                             <option value="İstanbul">İstanbul</option>
+                             <option value="Ankara">Ankara</option>
+                             <option value="İzmir">İzmir</option>
+                             <option value="Bursa">Bursa</option>
+                             <option value="Antalya">Antalya</option>
+                             <option value="Adana">Adana</option>
+                             <option value="Gaziantep">Gaziantep</option>
+                             <option value="Konya">Konya</option>
+                             <option value="Mersin">Mersin</option>
+                             <option value="Kayseri">Kayseri</option>
+                        </select>
+                        <span asp-validation-for="City" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label asp-for="Health" class="text-sm font-medium text-gray-700">Sağlık Durumu *</label>
+                        <input asp-for="Health" class="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Örn: Aşıları tam" required />
+                        <span asp-validation-for="Health" class="text-red-500 text-xs"></span>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-2 space-y-2">
+                        <label asp-for="Description" class="text-sm font-medium text-gray-700">Açıklama *</label>
+                        <textarea asp-for="Description" rows="4" class="w-full flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Evcil hayvanınız hakkında detaylı bilgi verin..." required></textarea>
+                         <span asp-validation-for="Description" class="text-red-500 text-xs"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <a href="/Listings/MyListings" class="flex-1 text-center py-2 px-4 border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                    İptal
+                </a>
+                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:opacity-90 transition shadow-sm font-medium">
+                    Değişiklikleri Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function handleFileSelect(event) {
+        const files = event.target.files;
+        const preview = document.getElementById('imagePreview');
+        
+        if (files.length > 0) {
+            preview.classList.remove('hidden');
+            preview.innerHTML = '';
+            
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const div = document.createElement('div');
+                        div.className = 'relative aspect-square rounded-lg overflow-hidden border bg-gray-100';
+                        div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" />`;
+                        preview.appendChild(div);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    }
+</script>
